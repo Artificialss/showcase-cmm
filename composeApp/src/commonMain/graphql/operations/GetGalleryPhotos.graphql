@@ -1,0 +1,13 @@
+query GetGalleryPhotos($page: Int, $limit: Int) {
+  photos(options: { paginate: { page: $page, limit: $limit } }) {
+    data {
+      id
+      title
+      url
+      thumbnailUrl
+      album {
+        title
+      }
+    }
+  }
+}

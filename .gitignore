@@ -1,0 +1,63 @@
+# Gradle
+.gradle/
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Kotlin
+.kotlin/
+
+# IDE — IntelliJ / Android Studio
+.idea/
+*.iml
+captures/
+
+# IDE — VS Code
+.vscode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Android
+local.properties
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# iOS / Xcode
+xcuserdata/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+
+# Room schema exports (generated, can be regenerated)
+composeApp/schemas/
+
+# Apollo generated files
+composeApp/src/commonMain/kotlin/com/artificialss/showcase/graphql/
+
+# KSP generated
+composeApp/build/generated/ksp/
+
+# Node (if using Kotlin/JS or tooling)
+node_modules/
+
+# Misc
+*.log
+*.tmp
+*.swp
+*~

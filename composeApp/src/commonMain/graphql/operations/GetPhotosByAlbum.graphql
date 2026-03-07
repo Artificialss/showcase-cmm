@@ -1,0 +1,14 @@
+query GetPhotosByAlbum($albumId: ID!) {
+  album(id: $albumId) {
+    id
+    title
+    photos {
+      data {
+        id
+        title
+        url
+        thumbnailUrl
+      }
+    }
+  }
+}
