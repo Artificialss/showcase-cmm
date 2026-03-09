@@ -152,7 +152,7 @@ private fun DashboardContent(
                             onPeriodSelected = onPeriodSelected,
                         )
                     }
-                    item { LineChartCard(title = "Revenue Trend", data = analyticsState.lineData) }
+                    item { LineChartCard(title = BITCOIN_PRICE_TITLE, data = analyticsState.bitcoinData) }
                     item { BarChartCard(title = "Weekly Activity", data = analyticsState.barData) }
                     item { AnalyticsDonutCard(title = "Category Breakdown", data = analyticsState.barData) }
                 }
@@ -524,3 +524,4 @@ private val CHART_TOP_SPACING = 12.dp
 private val CHART_LOADING_HEIGHT = 120.dp
 private const val LABEL_ALPHA = 0.8f
 private const val CATEGORY_BG_ALPHA = 0.15f
+private const val BITCOIN_PRICE_TITLE = "Bitcoin Price"

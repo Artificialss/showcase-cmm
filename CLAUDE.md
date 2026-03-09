@@ -44,6 +44,7 @@ koin                        = "4.0.4"
 coroutines                  = "1.9.0"
 serialization-json          = "1.7.3"
 apollo                      = "4.0.1"
+ktor                        = "3.0.3"
 coil                        = "3.1.0"
 maps-compose                = "6.5.3"
 lifecycle                   = "2.9.0"
@@ -82,7 +83,7 @@ com.artificialss.showcase/
 │       │           ├── analytics/  # Presenter only — screen merged into dashboard
 │       │           ├── map/
 │       │           ├── gallery/
-│       │           ├── profile/
+│       │           ├── profile/    # Includes chatbot feature within the profile package
 │       │           └── components/
 │       ├── androidMain/kotlin/     # Android-specific: Platform.android.kt, PlatformMapView (Google Maps)
 │       └── iosMain/kotlin/         # iOS-specific: Platform.ios.kt, PlatformMapView (Canvas-based)
@@ -135,6 +136,7 @@ fun DashboardScreen(presenter: DashboardPresenter) {
 - Navigation is managed via `rememberSaveable` integer index into `ALL_ROUTES`
 - No navigation library — simple `when` block in `NavigationHost`
 - State survives configuration changes (rotation) via `rememberSaveable` with primitive types
+- Login session is tracked via `rememberSaveable` boolean — logged-in users skip Splash/Login on rotation
 
 ### UI State
 Every screen has its own sealed class. No exceptions.
@@ -150,8 +152,9 @@ sealed class DashboardUiState {
 ### Repository Pattern
 - Every repository is defined as an interface first
 - `Mock*Repository` reads from Room-seeded data — active by default
-- `Remote*Repository` uses Apollo — wired but inactive, swapped via DI
-- Switching to live data = one line change in the Koin module
+- `Remote*Repository` uses Apollo or Ktor — swapped via DI
+- `RemoteBitcoinRepository` is always active — fetches live Bitcoin prices from CoinGecko via Ktor
+- Switching gallery to live data = one line change in the Koin module
 
 ```kotlin
 // Swap this single binding to go live:
@@ -293,10 +296,17 @@ fun TransactionCard(
 - `CameraState` (lat, lng, zoom) is saved via `rememberSaveable` with primitive state types
 - `MapMarker` is a simple data class shared across platforms
 
+### Ktor Client (HTTP Networking)
+- `ktor-client-core` in commonMain — platform-agnostic HTTP API
+- Engines: `ktor-client-okhttp` (Android), `ktor-client-darwin` (iOS)
+- `HttpClient()` registered as singleton in Koin — auto-detects platform engine
+- Used by `RemoteBitcoinRepository` to fetch live Bitcoin prices from CoinGecko API
+- Parse JSON responses manually with `kotlinx.serialization.json` (no content negotiation plugin)
+
 ### Coil 3
 - Use `coil-compose` + `coil-network-ktor` for CMP
-- Always provide `placeholder` and `error` states using `AsyncImage`
-- HTTP engines: `ktor-client-okhttp` (Android), `ktor-client-darwin` (iOS)
+- Gallery uses `SubcomposeAsyncImage` with composable `loading` and `error` slots for placeholder/error states
+- HTTP engines: shared Ktor engines (`ktor-client-okhttp` Android, `ktor-client-darwin` iOS)
 
 ### Apollo Kotlin 4
 - Always use `execute()` for one-shot queries, `toFlow()` for subscriptions
@@ -368,6 +378,8 @@ class DashboardPresenterTest {
 - All screens observe the reconstructed `AppStyleState` reactively — style changes apply live
 - Style dimensions: `ThemeVariant` (Light / Dark), `FontStyle` (Default / Serif / Mono), `ColorPalette` (Blue / Green / Purple)
 - `ShowcaseTheme` rebuilds `MaterialTheme` from `AppStyleState` at the root composable level
+- Top navigation bar uses `primary` color with `onPrimary` content for edge-to-edge branding
+- Splash and Login screens extend primary color behind the status bar for seamless edge-to-edge appearance
 
 ---
 
@@ -385,3 +397,26 @@ class DashboardPresenterTest {
 - Never hardcode strings in UI files
 - Never use `String.format()` in commonMain — it's JVM-only
 - Never use `rememberSaveable` with custom data classes directly — use primitive types or write a Saver
+
+---
+
+## Build Verification — Mandatory
+
+Before finishing **every response** that modifies code, you **must** run:
+
+```bash
+./gradlew composeApp:compileDebugKotlinAndroid 2>&1 | tail -15
+```
+
+- If the build **fails**, fix all errors before responding
+- If the build **succeeds**, confirm it in your response
+- Never deliver code that does not compile — this rule is non-negotiable
+- Timeout: allow up to 300 seconds for the build
+
+## Session History — Mandatory
+
+Before ending a session, append all prompts and their results to `HISTORY.md` at the project root:
+
+- Follow the existing format: session number, numbered entries, quoted prompt, result summary
+- Increment the session number from the last entry in the file
+- This preserves a complete development log across all conversations

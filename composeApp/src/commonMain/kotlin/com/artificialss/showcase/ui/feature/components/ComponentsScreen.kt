@@ -1,7 +1,5 @@
 package com.artificialss.showcase.ui.feature.components
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -74,12 +72,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -457,44 +459,43 @@ private fun ProgressSection() {
 
         Text("Shimmer Loading", style = MaterialTheme.typography.labelMedium)
         Spacer(modifier = Modifier.height(ITEM_SPACING))
-        ShimmerPlaceholder(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(SHIMMER_LINE_HEIGHT)
-                .clip(RoundedCornerShape(SHIMMER_CORNER)),
-        )
-        Spacer(modifier = Modifier.height(ITEM_SPACING))
-        Row(horizontalArrangement = Arrangement.spacedBy(ITEM_SPACING)) {
-            ShimmerPlaceholder(
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(SHIMMER_ROW_SPACING),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
                 modifier = Modifier
-                    .size(SHIMMER_CIRCLE_SIZE)
-                    .clip(CircleShape),
+                    .size(SHIMMER_IMAGE_SIZE)
+                    .clip(CircleShape)
+                    .shimmerEffect(),
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(ITEM_SPACING),
+                verticalArrangement = Arrangement.spacedBy(SHIMMER_LINE_SPACING),
             ) {
-                ShimmerPlaceholder(
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(SHIMMER_TITLE_FRACTION)
+                        .height(SHIMMER_TITLE_HEIGHT)
+                        .clip(RoundedCornerShape(SHIMMER_CORNER))
+                        .shimmerEffect(),
+                )
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(SHIMMER_LINE_HEIGHT)
-                        .clip(RoundedCornerShape(SHIMMER_CORNER)),
+                        .height(SHIMMER_DESC_HEIGHT)
+                        .clip(RoundedCornerShape(SHIMMER_CORNER))
+                        .shimmerEffect(),
                 )
-                ShimmerPlaceholder(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth(SHIMMER_SHORT_FRACTION)
-                        .height(SHIMMER_LINE_HEIGHT)
-                        .clip(RoundedCornerShape(SHIMMER_CORNER)),
+                        .height(SHIMMER_DESC_HEIGHT)
+                        .clip(RoundedCornerShape(SHIMMER_CORNER))
+                        .shimmerEffect(),
                 )
             }
         }
-        Spacer(modifier = Modifier.height(ITEM_SPACING))
-        ShimmerPlaceholder(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(SHIMMER_BLOCK_HEIGHT)
-                .clip(RoundedCornerShape(SHIMMER_BLOCK_CORNER)),
-        )
     }
 }
 
@@ -502,103 +503,117 @@ private fun ProgressSection() {
 
 // region — Sliders
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun SlidersSection() {
     ComponentSection(title = "Sliders") {
-        // Brightness slider
         var brightness by remember { mutableFloatStateOf(DEMO_SLIDER_VALUE) }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Brightness", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = "${(brightness * PERCENT_MULTIPLIER).toInt()}%",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
+        SliderRow(
+            label = "Brightness",
+            value = "${(brightness * PERCENT_MULTIPLIER).toInt()}%",
+            valueColor = MaterialTheme.colorScheme.primary,
+        )
+        val primaryColor = MaterialTheme.colorScheme.primary
         Slider(
             value = brightness,
             onValueChange = { brightness = it },
             valueRange = SLIDER_MIN..SLIDER_MAX,
+            thumb = { SliderThumb(color = primaryColor) },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                )
+            },
+            modifier = Modifier.height(SLIDER_HEIGHT),
         )
 
-        Spacer(modifier = Modifier.height(ITEM_SPACING))
-
-        // Stepped slider (Temperature)
         var temperature by remember { mutableFloatStateOf(TEMP_DEFAULT) }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Temperature", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = "${temperature.roundToInt()}${TEMP_UNIT}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.tertiary,
-            )
-        }
+        SliderRow(
+            label = "Temperature",
+            value = "${temperature.roundToInt()}${TEMP_UNIT}",
+            valueColor = MaterialTheme.colorScheme.tertiary,
+        )
+        val tertiaryColor = MaterialTheme.colorScheme.tertiary
         Slider(
             value = temperature,
             onValueChange = { temperature = it },
             valueRange = TEMP_MIN..TEMP_MAX,
             steps = TEMP_STEPS,
             colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.tertiary,
-                activeTrackColor = MaterialTheme.colorScheme.tertiary,
+                thumbColor = tertiaryColor,
+                activeTrackColor = tertiaryColor,
             ),
+            thumb = { SliderThumb(color = tertiaryColor) },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = tertiaryColor,
+                    ),
+                )
+            },
+            modifier = Modifier.height(SLIDER_HEIGHT),
         )
 
-        Spacer(modifier = Modifier.height(ITEM_SPACING))
-
-        // Volume slider with custom colors
         var volume by remember { mutableFloatStateOf(VOLUME_DEFAULT) }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Volume", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = "${(volume * PERCENT_MULTIPLIER).toInt()}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
+        SliderRow(
+            label = "Volume",
+            value = "${(volume * PERCENT_MULTIPLIER).toInt()}",
+            valueColor = MaterialTheme.colorScheme.error,
+        )
+        val errorColor = MaterialTheme.colorScheme.error
         Slider(
             value = volume,
             onValueChange = { volume = it },
             valueRange = SLIDER_MIN..SLIDER_MAX,
             colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.error,
-                activeTrackColor = MaterialTheme.colorScheme.error,
+                thumbColor = errorColor,
+                activeTrackColor = errorColor,
                 inactiveTrackColor = MaterialTheme.colorScheme.errorContainer,
             ),
+            thumb = { SliderThumb(color = errorColor) },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = errorColor,
+                        inactiveTrackColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
+                )
+            },
+            modifier = Modifier.height(SLIDER_HEIGHT),
         )
 
-        Spacer(modifier = Modifier.height(ITEM_SPACING))
-
-        // Range slider (Price range)
         var priceRange by remember { mutableStateOf(PRICE_DEFAULT_MIN..PRICE_DEFAULT_MAX) }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Price Range", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = "$${priceRange.start.roundToInt()} - $${priceRange.endInclusive.roundToInt()}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.secondary,
-            )
-        }
+        SliderRow(
+            label = "Price Range",
+            value = "$${priceRange.start.roundToInt()} – $${priceRange.endInclusive.roundToInt()}",
+            valueColor = MaterialTheme.colorScheme.secondary,
+        )
+        val secondaryColor = MaterialTheme.colorScheme.secondary
         RangeSlider(
             value = priceRange,
             onValueChange = { priceRange = it },
             valueRange = PRICE_MIN..PRICE_MAX,
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.secondary,
-                activeTrackColor = MaterialTheme.colorScheme.secondary,
-            ),
+            startThumb = { RangeSliderThumb() },
+            endThumb = { RangeSliderThumb() },
+            track = { rangeSliderState ->
+                SliderDefaults.Track(
+                    rangeSliderState = rangeSliderState,
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = secondaryColor,
+                    ),
+                )
+            },
+            modifier = Modifier.height(SLIDER_HEIGHT),
         )
     }
 }
@@ -879,28 +894,67 @@ private fun ProgressWithLabel(progress: Float, label: String) {
     }
 }
 
-@Composable
-private fun ShimmerPlaceholder(modifier: Modifier = Modifier) {
+private fun Modifier.shimmerEffect(): Modifier = composed {
+    var size by remember { mutableStateOf(IntSize.Zero) }
     val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = SHIMMER_TRANSLATE_TARGET,
+    val startOffsetX by transition.animateFloat(
+        initialValue = -2 * size.width.toFloat(),
+        targetValue = 2 * size.width.toFloat(),
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = SHIMMER_DURATION_MS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
+            animation = tween(durationMillis = SHIMMER_DURATION_MS),
         ),
-        label = "shimmerTranslate",
+        label = "shimmerOffset",
     )
-    val shimmerBrush = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = SHIMMER_HIGHLIGHT_ALPHA),
-            MaterialTheme.colorScheme.surfaceVariant,
+
+    background(
+        brush = Brush.linearGradient(
+            colors = SHIMMER_COLORS,
+            start = Offset(startOffsetX, 0f),
+            end = Offset(startOffsetX + size.width.toFloat(), size.height.toFloat()),
         ),
-        start = Offset(translateAnim - SHIMMER_GRADIENT_WIDTH, 0f),
-        end = Offset(translateAnim, 0f),
+    ).onGloballyPositioned { size = it.size }
+}
+
+@Composable
+private fun SliderThumb(color: androidx.compose.ui.graphics.Color) {
+    Box(
+        modifier = Modifier
+            .size(THUMB_SIZE)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.onSurface),
     )
-    Box(modifier = modifier.background(shimmerBrush))
+}
+
+@Composable
+private fun RangeSliderThumb() {
+    Box(
+        modifier = Modifier
+            .width(RANGE_THUMB_WIDTH)
+            .height(RANGE_THUMB_HEIGHT)
+            .clip(RoundedCornerShape(RANGE_THUMB_CORNER))
+            .background(MaterialTheme.colorScheme.onSurface),
+    )
+}
+
+@Composable
+private fun SliderRow(
+    label: String,
+    value: String,
+    valueColor: androidx.compose.ui.graphics.Color,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = valueColor,
+        )
+    }
 }
 
 @Composable
@@ -972,18 +1026,27 @@ private const val DEMO_PROGRESS_MID = 0.5f
 private const val DEMO_PROGRESS_HIGH = 0.75f
 
 // Shimmer
-private const val SHIMMER_DURATION_MS = 1200
-private const val SHIMMER_TRANSLATE_TARGET = 1000f
-private const val SHIMMER_GRADIENT_WIDTH = 400f
-private const val SHIMMER_HIGHLIGHT_ALPHA = 0.3f
-private val SHIMMER_LINE_HEIGHT = 14.dp
-private val SHIMMER_CIRCLE_SIZE = 48.dp
-private const val SHIMMER_SHORT_FRACTION = 0.6f
-private val SHIMMER_BLOCK_HEIGHT = 80.dp
+private const val SHIMMER_DURATION_MS = 1000
+private val SHIMMER_COLORS = listOf(
+    Color(0xFFF9F9F9),
+    Color(0xFFECECEC),
+    Color(0xFFFFFFFF),
+)
+private val SHIMMER_IMAGE_SIZE = 52.dp
+private val SHIMMER_TITLE_HEIGHT = 14.dp
+private val SHIMMER_DESC_HEIGHT = 10.dp
+private val SHIMMER_ROW_SPACING = 12.dp
+private val SHIMMER_LINE_SPACING = 6.dp
 private val SHIMMER_CORNER = 4.dp
-private val SHIMMER_BLOCK_CORNER = 12.dp
+private const val SHIMMER_TITLE_FRACTION = 0.6f
+private const val SHIMMER_SHORT_FRACTION = 0.4f
 
 // Sliders
+private val SLIDER_HEIGHT = 32.dp
+private val THUMB_SIZE = 20.dp
+private val RANGE_THUMB_WIDTH = 4.dp
+private val RANGE_THUMB_HEIGHT = 24.dp
+private val RANGE_THUMB_CORNER = 2.dp
 private const val DEMO_SLIDER_VALUE = 0.5f
 private const val SLIDER_MIN = 0f
 private const val SLIDER_MAX = 1f

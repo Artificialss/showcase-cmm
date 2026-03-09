@@ -65,9 +65,9 @@ private val greenLightScheme = lightColorScheme(
 )
 
 private val greenDarkScheme = darkColorScheme(
-    primary = GreenPrimaryDark,
-    secondary = GreenSecondaryDark,
-    tertiary = GreenTertiaryDark,
+    primary = GreenPrimary,
+    secondary = GreenSecondary,
+    tertiary = GreenTertiary,
     surface = SurfaceDark,
     onSurface = OnSurfaceDark,
     surfaceVariant = SurfaceVariantDark,

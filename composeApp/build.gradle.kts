@@ -58,6 +58,8 @@ kotlin {
             implementation(libs.apollo.runtime)
             implementation(libs.apollo.normalized.cache)
 
+            implementation(libs.ktor.client.core)
+
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
 

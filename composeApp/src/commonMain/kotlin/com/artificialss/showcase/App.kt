@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +62,7 @@ private val ALL_ROUTES = listOf(
 fun App() {
     var themeOrdinal by rememberSaveable { mutableIntStateOf(ThemeVariant.LIGHT.ordinal) }
     var fontOrdinal by rememberSaveable { mutableIntStateOf(FontStyle.DEFAULT.ordinal) }
-    var colorOrdinal by rememberSaveable { mutableIntStateOf(ColorPalette.BLUE.ordinal) }
+    var colorOrdinal by rememberSaveable { mutableIntStateOf(ColorPalette.GREEN.ordinal) }
     var routeIndex by rememberSaveable { mutableIntStateOf(0) }
     var isLoggedIn by rememberSaveable { mutableStateOf(false) }
     var showWelcomeDialog by rememberSaveable { mutableStateOf(false) }
@@ -82,17 +81,15 @@ fun App() {
             WelcomeDialog(onDismiss = { showWelcomeDialog = false })
         }
 
-        Scaffold(
-            topBar = {
-                if (showChrome) {
+        if (showChrome) {
+            Scaffold(
+                topBar = {
                     TopNavigationBar(
                         currentRoute = currentRoute,
                         onRouteSelected = { routeIndex = ALL_ROUTES.indexOf(it) },
                     )
-                }
-            },
-            bottomBar = {
-                if (showChrome) {
+                },
+                bottomBar = {
                     StyleBottomBar(
                         appStyle = appStyle,
                         onStyleChanged = {
@@ -101,10 +98,21 @@ fun App() {
                             colorOrdinal = it.colorPalette.ordinal
                         },
                     )
-                }
-            },
-        ) { innerPadding ->
-            val modifier = Modifier.padding(innerPadding)
+                },
+            ) { innerPadding ->
+                NavigationHost(
+                    currentRoute = currentRoute,
+                    isLoggedIn = isLoggedIn,
+                    onRouteChanged = { routeIndex = ALL_ROUTES.indexOf(it) },
+                    onLoginSuccess = {
+                        isLoggedIn = true
+                        showWelcomeDialog = true
+                        routeIndex = ALL_ROUTES.indexOf(AppRoute.Dashboard)
+                    },
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
+        } else {
             NavigationHost(
                 currentRoute = currentRoute,
                 isLoggedIn = isLoggedIn,
@@ -114,7 +122,7 @@ fun App() {
                     showWelcomeDialog = true
                     routeIndex = ALL_ROUTES.indexOf(AppRoute.Dashboard)
                 },
-                modifier = modifier,
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
@@ -128,7 +136,7 @@ private fun WelcomeDialog(onDismiss: () -> Unit) {
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(DIALOG_PADDING),
             shape = RoundedCornerShape(DIALOG_CORNER_RADIUS),
             color = MaterialTheme.colorScheme.surface,
@@ -136,67 +144,46 @@ private fun WelcomeDialog(onDismiss: () -> Unit) {
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(DIALOG_CONTENT_PADDING)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth()
+                    .padding(DIALOG_CONTENT_PADDING),
             ) {
                 Text(
                     text = "Artificialss Showcase",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
+                Spacer(modifier = Modifier.height(DIALOG_SPACING_XS))
                 Text(
                     text = "Technical Demo Application",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = DIALOG_SPACING_MD))
 
                 SectionTitle("Who we are")
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
+                Spacer(modifier = Modifier.height(DIALOG_SPACING_XS))
                 Text(
-                    text = "Artificialss is a software development studio specializing in " +
-                        "cross-platform mobile applications. We build production-grade apps " +
-                        "with modern architectures, clean code, and pixel-perfect UI.",
+                    text = "Artificialss builds cross-platform mobile apps " +
+                        "with modern architectures and pixel-perfect UI.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
 
-                SectionTitle("What this app is")
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
-                Text(
-                    text = "This showcase demonstrates our capabilities in building Compose " +
-                        "Multiplatform applications. Every screen, animation, chart, and " +
-                        "interaction is crafted to highlight our attention to detail and " +
-                        "engineering quality.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                SectionTitle("Highlights")
+                Spacer(modifier = Modifier.height(DIALOG_SPACING_XS))
+                BulletPoint("Canvas charts with touch tooltips")
+                BulletPoint("Interactive platform map")
+                BulletPoint("Image gallery with async loading")
+                BulletPoint("MVP + Room + Koin + Apollo")
+                BulletPoint("Live theme, font, and color switching")
 
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
 
-                SectionTitle("Pay attention to")
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
-                BulletPoint("Custom Canvas-based charts with smooth animations")
-                BulletPoint("Interactive map with platform-specific rendering")
-                BulletPoint("Image gallery with async loading and full-screen viewer")
-                BulletPoint("MVP architecture with clean separation of concerns")
-                BulletPoint("Room database with mock data seeding")
-
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
-
-                SectionTitle("Live theme switching")
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
                 Text(
-                    text = "The bottom bar contains three controls that change the app's " +
-                        "appearance in real time. Tap the icons to switch between " +
-                        "light/dark mode, font styles (Default, Serif, Monospace), and " +
-                        "color palettes (Blue, Green, Purple). The gray badges next to each " +
-                        "icon show the current selection.",
+                    text = "Use the bottom bar to switch themes, fonts, and colors in real time.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -204,14 +191,14 @@ private fun WelcomeDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
 
                 Text(
-                    text = "Built with Kotlin Multiplatform, Compose, Room, Apollo GraphQL, and Koin.",
+                    text = "Built with Kotlin Multiplatform + Compose",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.outline,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
+                Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
 
                 Button(
                     onClick = onDismiss,
@@ -254,7 +241,9 @@ private fun NavigationHost(
     when (currentRoute) {
         AppRoute.Splash -> {
             if (isLoggedIn) {
-                onRouteChanged(AppRoute.Dashboard)
+                LaunchedEffect(Unit) {
+                    onRouteChanged(AppRoute.Dashboard)
+                }
             } else {
                 SplashScreen(
                     onNavigateToLogin = { onRouteChanged(AppRoute.Login) },
@@ -264,7 +253,9 @@ private fun NavigationHost(
         }
         AppRoute.Login -> {
             if (isLoggedIn) {
-                onRouteChanged(AppRoute.Dashboard)
+                LaunchedEffect(Unit) {
+                    onRouteChanged(AppRoute.Dashboard)
+                }
             } else {
                 val presenter = koinViewModel<LoginPresenterImpl>()
                 LoginScreen(
@@ -299,10 +290,11 @@ private fun NavigationHost(
     }
 }
 
-private val DIALOG_PADDING = 16.dp
+private val DIALOG_PADDING = 24.dp
 private val DIALOG_CORNER_RADIUS = 20.dp
 private val DIALOG_ELEVATION = 6.dp
 private val DIALOG_CONTENT_PADDING = 24.dp
+private val DIALOG_SPACING_XS = 4.dp
 private val DIALOG_SPACING_SM = 8.dp
-private val DIALOG_SPACING_MD = 16.dp
+private val DIALOG_SPACING_MD = 12.dp
 private val BULLET_VERTICAL_PADDING = 2.dp

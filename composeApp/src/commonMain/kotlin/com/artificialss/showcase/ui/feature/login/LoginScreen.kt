@@ -1,14 +1,19 @@
 package com.artificialss.showcase.ui.feature.login
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +40,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import com.artificialss.showcase.ui.theme.BrandGreen
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -50,8 +58,8 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by presenter.uiState.collectAsStateWithLifecycle()
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf(DEFAULT_EMAIL) }
+    var password by rememberSaveable { mutableStateOf(DEFAULT_PASSWORD) }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var rememberMe by rememberSaveable { mutableStateOf(false) }
 
@@ -61,55 +69,73 @@ fun LoginScreen(
         }
     }
 
-    Column(
-        modifier = modifier
+    Box(
+        modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = HORIZONTAL_PADDING),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .background(Color.White),
     ) {
-        Spacer(modifier = Modifier.weight(1f))
+        StatusBarBackground()
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = HORIZONTAL_PADDING),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
 
-        BrandingHeader()
+            BrandingHeader()
 
-        Spacer(modifier = Modifier.height(SPACING_XL))
+            Spacer(modifier = Modifier.height(SPACING_XL))
 
-        EmailField(value = email, onValueChange = { email = it })
-        Spacer(modifier = Modifier.height(SPACING_MD))
+            EmailField(value = email, onValueChange = { email = it })
+            Spacer(modifier = Modifier.height(SPACING_MD))
 
-        PasswordField(
-            value = password,
-            onValueChange = { password = it },
-            visible = passwordVisible,
-            onToggleVisibility = { passwordVisible = !passwordVisible },
-        )
-        Spacer(modifier = Modifier.height(SPACING_SM))
+            PasswordField(
+                value = password,
+                onValueChange = { password = it },
+                visible = passwordVisible,
+                onToggleVisibility = { passwordVisible = !passwordVisible },
+            )
+            Spacer(modifier = Modifier.height(SPACING_SM))
 
-        RememberAndForgotRow(
-            rememberMe = rememberMe,
-            onRememberMeChanged = { rememberMe = it },
-        )
+            RememberAndForgotRow(
+                rememberMe = rememberMe,
+                onRememberMeChanged = { rememberMe = it },
+            )
 
-        Spacer(modifier = Modifier.height(SPACING_LG))
+            Spacer(modifier = Modifier.height(SPACING_LG))
 
-        LoginButton(state = state, onClick = { presenter.onLogin(email, password) })
+            LoginButton(state = state, onClick = { presenter.onLogin(email, password) })
 
-        ErrorText(state = state)
+            ErrorText(state = state)
 
-        Spacer(modifier = Modifier.height(SPACING_LG))
+            Spacer(modifier = Modifier.height(SPACING_LG))
 
-        DividerWithText()
+            DividerWithText()
 
-        Spacer(modifier = Modifier.height(SPACING_MD))
+            Spacer(modifier = Modifier.height(SPACING_MD))
 
-        SignUpPrompt()
+            SignUpPrompt()
 
-        Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
 
-        FooterText()
-        Spacer(modifier = Modifier.height(SPACING_MD))
+            FooterText()
+            Spacer(modifier = Modifier.height(SPACING_MD))
+        }
     }
+}
+
+@Composable
+private fun StatusBarBackground() {
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(statusBarHeight)
+            .background(BrandGreen),
+    )
 }
 
 @Composable
@@ -117,7 +143,7 @@ private fun BrandingHeader() {
     Icon(
         imageVector = Icons.Default.Lock,
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.primary,
+        tint = BrandGreen,
         modifier = Modifier.size(BRAND_ICON_SIZE),
     )
     Spacer(modifier = Modifier.height(SPACING_MD))
@@ -198,7 +224,7 @@ private fun RememberAndForgotRow(
             Text(
                 text = FORGOT_PASSWORD_TEXT,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = BrandGreen,
             )
         }
     }
@@ -218,10 +244,19 @@ private fun LoginButton(
             .height(BUTTON_HEIGHT),
     ) {
         if (isLoading) {
-            CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.onPrimary,
-                strokeWidth = PROGRESS_STROKE,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(LOADER_SIZE),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = LOADER_STROKE,
+                    strokeCap = StrokeCap.Round,
+                )
+                Spacer(modifier = Modifier.width(SPACING_SM))
+                Text(SIGNING_IN_TEXT)
+            }
         } else {
             Text(SIGN_IN_TEXT)
         }
@@ -273,7 +308,7 @@ private fun SignUpPrompt() {
                 text = SIGN_UP_TEXT,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = BrandGreen,
             )
         }
     }
@@ -297,9 +332,10 @@ private val SPACING_MD = 16.dp
 private val SPACING_LG = 24.dp
 private val SPACING_XL = 40.dp
 private val BUTTON_HEIGHT = 52.dp
-private val PROGRESS_STROKE = 2.dp
 private val BRAND_ICON_SIZE = 48.dp
 private val CHECKBOX_SIZE = 24.dp
+private val LOADER_SIZE = 18.dp
+private val LOADER_STROKE = 2.dp
 
 private const val TITLE_TEXT = "Welcome Back"
 private const val SUBTITLE_TEXT = "Sign in to your account"
@@ -310,7 +346,10 @@ private const val HIDE_PASSWORD_DESC = "Hide password"
 private const val REMEMBER_ME_TEXT = "Remember me"
 private const val FORGOT_PASSWORD_TEXT = "Forgot password?"
 private const val SIGN_IN_TEXT = "Sign In"
+private const val SIGNING_IN_TEXT = "Signing In..."
 private const val OR_TEXT = "OR"
 private const val NO_ACCOUNT_TEXT = "Don't have an account?"
 private const val SIGN_UP_TEXT = "Sign Up"
 private const val FOOTER_TEXT = "By signing in, you agree to our Terms of Service and Privacy Policy"
+private const val DEFAULT_EMAIL = "guest@artificialss.com"
+private const val DEFAULT_PASSWORD = "showcase2025"

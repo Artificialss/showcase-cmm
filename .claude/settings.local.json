@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(./gradlew composeApp:compileDebugKotlinAndroid:*)",
+      "Bash(./gradlew compileDebugKotlinAndroid:*)",
+      "Bash(rm:*)",
+      "Bash(sips:*)",
+      "Bash(find:*)",
+      "Bash(python3:*)"
     ]
   }
 }

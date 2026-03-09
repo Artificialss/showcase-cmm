@@ -2,6 +2,7 @@ package com.artificialss.showcase.ui.feature.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.artificialss.showcase.data.repository.BitcoinRepository
 import com.artificialss.showcase.data.repository.ChartRepository
 import com.artificialss.showcase.domain.model.ChartPeriod
 import com.artificialss.showcase.domain.model.ChartType
@@ -9,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 interface AnalyticsPresenter {
@@ -19,6 +19,7 @@ interface AnalyticsPresenter {
 
 class AnalyticsPresenterImpl(
     private val chartRepository: ChartRepository,
+    private val bitcoinRepository: BitcoinRepository,
 ) : ViewModel(), AnalyticsPresenter {
 
     private val _uiState = MutableStateFlow<AnalyticsUiState>(AnalyticsUiState.Loading)
@@ -40,24 +41,29 @@ class AnalyticsPresenterImpl(
             _uiState.value = AnalyticsUiState.Loading
         }
         viewModelScope.launch {
-            val lineFlow = chartRepository.getChartData(ChartType.LINE, currentPeriod.name)
-            val barFlow = chartRepository.getChartData(ChartType.BAR, currentPeriod.name)
-
-            combine(lineFlow, barFlow) { lineData, barData ->
-                AnalyticsUiState.Success(
-                    lineData = lineData,
-                    barData = barData,
-                    selectedPeriod = currentPeriod,
-                )
+            val bitcoinData = try {
+                bitcoinRepository.getBitcoinPrices(currentPeriod)
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                emptyList()
             }
+
+            chartRepository.getChartData(ChartType.BAR, currentPeriod.name)
                 .catch { throwable ->
                     _uiState.value = AnalyticsUiState.Error(
-                        throwable.message ?: "Failed to load chart data",
+                        throwable.message ?: LOAD_ERROR_MESSAGE,
                     )
                 }
-                .collect { successState ->
-                    _uiState.value = successState
+                .collect { barData ->
+                    _uiState.value = AnalyticsUiState.Success(
+                        bitcoinData = bitcoinData,
+                        barData = barData,
+                        selectedPeriod = currentPeriod,
+                    )
                 }
         }
+    }
+
+    companion object {
+        private const val LOAD_ERROR_MESSAGE = "Failed to load chart data"
     }
 }

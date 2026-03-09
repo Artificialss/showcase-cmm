@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="coinFace" cx="45%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFF0B3"/>
+      <stop offset="25%" stop-color="#FFD700"/>
+      <stop offset="55%" stop-color="#E5A800"/>
+      <stop offset="80%" stop-color="#C8920A"/>
+      <stop offset="100%" stop-color="#A67C00"/>
+    </radialGradient>
+    <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4A017"/>
+      <stop offset="50%" stop-color="#8B6914"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+    <radialGradient id="innerRing" cx="45%" cy="38%" r="48%">
+      <stop offset="0%" stop-color="#FFE066" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#DAA520" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#B8860B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="specular" cx="35%" cy="30%" r="30%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bottomShadow" cx="55%" cy="65%" r="45%">
+      <stop offset="0%" stop-color="#8B6508" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#7A5800" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#5C4000" stop-opacity="0.35"/>
+    </radialGradient>
+    <filter id="dropShadow" x="-10%" y="-5%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#5C4000" flood-opacity="0.4"/>
+    </filter>
+    <linearGradient id="symbolGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF0B3"/>
+      <stop offset="40%" stop-color="#E5A800"/>
+      <stop offset="100%" stop-color="#8B6914"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer rim -->
+  <circle cx="256" cy="264" r="230" fill="url(#rimGrad)" filter="url(#dropShadow)"/>
+
+  <!-- Coin face -->
+  <circle cx="256" cy="260" r="218" fill="url(#coinFace)"/>
+
+  <!-- Raised inner ring -->
+  <circle cx="256" cy="260" r="185" fill="none" stroke="#C8920A" stroke-width="3.5" opacity="0.7"/>
+  <circle cx="256" cy="260" r="181" fill="none" stroke="#FFE066" stroke-width="1" opacity="0.35"/>
+
+  <!-- Inner ring highlight -->
+  <circle cx="256" cy="260" r="183" fill="url(#innerRing)"/>
+
+  <!-- Milled edge -->
+  <g opacity="0.12">
+    <circle cx="256" cy="260" r="222" fill="none" stroke="#4A3500" stroke-width="5" stroke-dasharray="4 6"/>
+  </g>
+
+  <!-- A letter shadow -->
+  <g transform="translate(3, 4)" opacity="0.2">
+    <path d="M256 148 L310 340 L286 340 L274 300 L238 300 L226 340 L202 340 Z M256 195 L243 285 L269 285 Z"
+          fill="#6B4F00" fill-rule="evenodd"/>
+  </g>
+
+  <!-- A letter main -->
+  <path d="M256 148 L310 340 L286 340 L274 300 L238 300 L226 340 L202 340 Z M256 195 L243 285 L269 285 Z"
+        fill="url(#symbolGrad)" fill-rule="evenodd" stroke="#A67C00" stroke-width="2"/>
+
+  <!-- Specular highlight -->
+  <circle cx="256" cy="260" r="218" fill="url(#specular)"/>
+
+  <!-- Bottom darkening -->
+  <circle cx="256" cy="260" r="218" fill="url(#bottomShadow)"/>
+
+  <!-- Top highlight arc -->
+  <path d="M100 210 A200 200 0 0 1 400 180" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.2" stroke-linecap="round"/>
+</svg>

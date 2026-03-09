@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+
+  <!-- Tree-A monogram — Artificialss -->
+  <g fill="#C4B49A">
+    <!-- Trunk -->
+    <rect x="245" y="58" width="22" height="262"/>
+
+    <!-- TOP LEFT: branch(245→162) + hook(162→184,up) + cap(138→184) -->
+    <path d="
+      M 245,106 L 184,106 L 184,60 L 138,60 L 138,80 L 162,80 L 162,126 L 245,126 Z
+    "/>
+    <!-- TOP RIGHT: mirrored contour -->
+    <path d="
+      M 267,106 L 328,106 L 328,60 L 374,60 L 374,80 L 350,80 L 350,126 L 267,126 Z
+    "/>
+
+    <!-- MID LEFT: branch(245→192) + hook(192→214,up) + cap(168→214) -->
+    <path d="
+      M 245,208 L 214,208 L 214,170 L 168,170 L 168,190 L 192,190 L 192,228 L 245,228 Z
+    "/>
+    <!-- MID RIGHT: mirrored contour -->
+    <path d="
+      M 267,208 L 298,208 L 298,170 L 344,170 L 344,190 L 320,190 L 320,228 L 267,228 Z
+    "/>
+
+    <!-- A: left leg -->
+    <polygon points="245,320 267,320 210,444 188,444"/>
+    <!-- A: right leg -->
+    <polygon points="245,320 267,320 324,444 302,444"/>
+    <!-- A: crossbar -->
+    <rect x="210" y="398" width="92" height="18"/>
+  </g>
+</svg>

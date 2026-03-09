@@ -80,7 +80,7 @@ private fun AnalyticsContent(
             onPeriodSelected = onPeriodSelected,
         )
 
-        LineChartCard(title = "Revenue Trend", data = state.lineData)
+        LineChartCard(title = BITCOIN_PRICE_TITLE, data = state.bitcoinData)
         BarChartCard(title = "Weekly Activity", data = state.barData)
         DonutChartCard(title = "Category Breakdown", data = state.barData)
     }
@@ -208,3 +208,4 @@ private val SECTION_SPACING = 16.dp
 private val CHIP_SPACING = 8.dp
 private val CARD_PADDING = 16.dp
 private val CHART_TOP_SPACING = 12.dp
+private const val BITCOIN_PRICE_TITLE = "Bitcoin Price"

@@ -1,5 +1,6 @@
 package com.artificialss.showcase.di
 
+import com.artificialss.showcase.data.repository.BitcoinRepository
 import com.artificialss.showcase.data.repository.ChartRepository
 import com.artificialss.showcase.data.repository.GalleryRepository
 import com.artificialss.showcase.data.repository.MockChartRepository
@@ -7,10 +8,12 @@ import com.artificialss.showcase.data.repository.MockGalleryRepository
 import com.artificialss.showcase.data.repository.MockShopLocationRepository
 import com.artificialss.showcase.data.repository.MockTransactionRepository
 import com.artificialss.showcase.data.repository.MockUserRepository
+import com.artificialss.showcase.data.repository.RemoteBitcoinRepository
 import com.artificialss.showcase.data.repository.ShopLocationRepository
 import com.artificialss.showcase.data.repository.TransactionRepository
 import com.artificialss.showcase.data.repository.UserRepository
 import com.artificialss.showcase.ui.feature.analytics.AnalyticsPresenterImpl
+import io.ktor.client.HttpClient
 import com.artificialss.showcase.ui.feature.dashboard.DashboardPresenterImpl
 import com.artificialss.showcase.ui.feature.gallery.GalleryPresenterImpl
 import com.artificialss.showcase.ui.feature.login.LoginPresenterImpl
@@ -30,7 +33,9 @@ val dashboardModule = module {
 
 val analyticsModule = module {
     single<ChartRepository> { MockChartRepository(get()) }
-    viewModel { AnalyticsPresenterImpl(get()) }
+    single { HttpClient() }
+    single<BitcoinRepository> { RemoteBitcoinRepository(get()) }
+    viewModel { AnalyticsPresenterImpl(get(), get()) }
 }
 
 val mapModule = module {

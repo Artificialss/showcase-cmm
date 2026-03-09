@@ -26,6 +26,7 @@ A **Compose Multiplatform** showcase application demonstrating Artificialss's de
 | UI | Compose Multiplatform | 1.8.0 |
 | Local Storage | Room KMP | 2.7.1 |
 | Charts | Custom Canvas (BarChart, LineChart, DonutChart) | - |
+| Networking | Ktor Client (OkHttp engine Android, Darwin engine iOS) | 3.0.3 |
 | Images | Coil 3 + Ktor | 3.1.0 |
 | DI | Koin 4 (BOM) | 4.0.4 |
 | GraphQL | Apollo Kotlin 4 | 4.0.1 |
@@ -36,12 +37,12 @@ A **Compose Multiplatform** showcase application demonstrating Artificialss's de
 
 | Screen | Description |
 |--------|-------------|
-| **Splash** | Animated entry with fade transition, auto-navigates to Login |
-| **Login** | Email/password form with mock auth and loading states |
-| **Dashboard** | Unified home + analytics: balance card, quick actions, spending donut, recent transactions (preview + "See all" bottom sheet), and full analytics section with line/bar/donut charts and period selector |
+| **Splash** | Animated entry with fade transition, primary-colored edge-to-edge background, auto-navigates to Login |
+| **Login** | Email/password with visibility toggle, "Remember me" checkbox, "Forgot password?" link, "Sign Up" prompt, loading spinner with text, session persistence (survives rotation), primary status bar |
+| **Dashboard** | Unified home + analytics: balance card, quick actions, spending donut, recent transactions (preview + "See all" bottom sheet), and full analytics section with Bitcoin price chart (live API), bar/donut charts, and period selector |
 | **Map** | Interactive map widget with shop markers (Google Maps on Android, Canvas on iOS), tap markers to view shop details in a bottom sheet |
-| **Gallery** | Image grid with sort (A-Z, Z-A, by album) and layout toggle (2-col grid, 3-col grid, list). Clean card layout. Full-screen image viewer on tap |
-| **Profile** | User avatar, stats row, and activity feed |
+| **Gallery** | Image grid with sort (A-Z, Z-A, by album) and layout toggle (2-col grid, 3-col grid, list). Clean card layout. Full-screen image viewer on tap. Placeholder/error states for failed image loads |
+| **Profile** | User avatar (tap to change from gallery), editable name/title/email via dialog, stats row, activity feed, AI assistant chatbot with simulated responses |
 | **Components** | Comprehensive UI component sampler — see [UI Kit](#ui-kit-components-screen) below |
 
 ## Features
@@ -67,6 +68,17 @@ All charts use `Animatable` with `tween(FastOutSlowInEasing)` for smooth entry a
 - **Layout**: Switch between 2-column grid, 3-column grid, and list view
 - Grid cards show clean images without overlay text
 - List view shows thumbnail + title per row
+- Image loading: `SubcomposeAsyncImage` with loading placeholder (surfaceVariant + image icon) and error state (errorContainer + broken image icon)
+
+### Profile Features
+- **Edit Profile**: Dialog with name, title, and email fields — saves locally in-memory
+- **Avatar Picker**: Tap avatar to choose from a grid of 9 sample portraits
+- **AI Assistant**: "Ask AI" chip in the activity area opens a bottom sheet chatbot with 3 quick actions:
+  - "What are my pending tasks?" — returns a bulleted task list
+  - "Summarize my recent activity" — returns a productivity summary
+  - "Suggest next steps for my project" — returns actionable suggestions
+  - Simulates AI API call with 1.2s typing indicator before response
+  - Chat bubbles with asymmetric rounded corners, auto-scroll, scrim overlay
 
 ### UI Kit (Components Screen)
 A comprehensive interactive sampler showcasing Material 3 components:
@@ -80,8 +92,8 @@ A comprehensive interactive sampler showcasing Material 3 components:
 | **Toggle Switches** | 3 labeled switches with independent state |
 | **Checkboxes** | 3 labeled checkboxes with independent state |
 | **Radio Buttons** | Subscription plan cards (Free / Pro / Enterprise) — icon, title, subtitle, border highlight, selected background, check mark |
-| **Progress Indicators** | Circular indeterminate (3 sizes), circular determinate with animated percentage labels, linear indeterminate (rounded), linear determinate (3 animated bars), shimmer loading placeholders (line, avatar + text, content block) |
-| **Sliders** | Brightness (continuous), Temperature (stepped with tertiary color), Volume (error/red color), Price Range (`RangeSlider` with secondary color) |
+| **Progress Indicators** | Circular indeterminate (3 sizes), circular determinate with animated percentage labels, linear indeterminate (rounded), linear determinate (3 animated bars), shimmer loading placeholder (avatar + title/description lines using Modifier.shimmerEffect()) |
+| **Sliders** | Brightness (continuous, custom circle thumb), Temperature (stepped, tertiary color, circle thumb), Volume (error/red color, circle thumb), Price Range (RangeSlider with secondary color) |
 | **Snackbar & Toast** | Snackbar, Snackbar with action + dismiss, custom Toast overlay with auto-dismiss |
 | **Dialogs** | Simple (title + message + OK), Info (with icon), Confirmation (delete account, error-colored button, warning icon), Input (New Event form with 3 text fields) |
 
@@ -96,7 +108,8 @@ Bottom bar with three toggle controls that change the app's appearance in real t
 Current values shown in gray circular badges. Style state survives rotation.
 
 ### Edge-to-Edge
-- Top navigation bar respects status bar insets
+- Top navigation bar uses primary color with `onPrimary` content, respects status bar insets
+- Splash and Login screens extend primary background behind the status bar
 - Bottom style bar respects navigation bar insets
 - Both bars never overlap system UI
 
@@ -105,6 +118,7 @@ All critical state survives configuration changes:
 - Current route, theme, font, and color palette stored as `rememberSaveable` integers
 - Map camera position preserved via primitive state types (`mutableDoubleStateOf`, `mutableFloatStateOf`)
 - Login form fields, gallery controls, and bottom sheet state all survive rotation
+- Login session state persists — logged-in users skip Splash/Login on rotation
 
 ## Setup
 
@@ -254,6 +268,7 @@ TransactionRepository    <──   MockTransactionRepository(TransactionDao)
 ChartRepository          <──   MockChartRepository(ChartDataDao)
 ShopLocationRepository   <──   MockShopLocationRepository(ShopLocationDao)
 GalleryRepository        <──   MockGalleryRepository(GalleryItemDao)
+BitcoinRepository        <──   RemoteBitcoinRepository(HttpClient)
 UserRepository           <──   MockUserRepository()
 ```
 
@@ -364,6 +379,64 @@ single<GalleryRepository> { RemoteGalleryRepository(get()) }
 ```
 
 No changes needed in the Presenter, Screen, or filter/sort logic — the repository interface contract is identical.
+
+### Bitcoin Price API (Ktor Client)
+
+The Analytics/Dashboard "Bitcoin Price" line chart fetches live data from the [CoinGecko API](https://www.coingecko.com/en/api), a free public cryptocurrency API (no auth required). This demonstrates cross-platform HTTP networking with Ktor Client in KMP.
+
+#### Ktor Setup
+
+- **Common**: `ktor-client-core` in `commonMain` — platform-agnostic HTTP client API
+- **Android**: `ktor-client-okhttp` engine — uses OkHttp under the hood
+- **iOS**: `ktor-client-darwin` engine — uses URLSession under the hood
+- **DI**: `HttpClient()` registered as singleton in Koin (auto-detects platform engine)
+
+#### API Endpoint
+
+```
+GET https://api.coingecko.com/api/v3/coins/bitcoin/market_chart
+    ?vs_currency=usd
+    &days={7|30|90}
+```
+
+Returns `{"prices": [[timestamp, price], ...]}` — array of `[Unix ms, USD price]` pairs.
+
+#### Data Flow
+
+```
+CoinGecko API (HTTPS)
+    │
+    ▼
+Ktor HttpClient.get() → bodyAsText()
+    │
+    ▼
+kotlinx.serialization.json manual parsing
+    │
+    ▼
+RemoteBitcoinRepository.parsePrices()
+    ├── Samples evenly to match period label count
+    ├── WEEK: 7 points (Mon–Sun)
+    ├── MONTH: 4 points (Week 1–4)
+    └── QUARTER: 3 points (Jan–Mar)
+    │
+    ▼
+List<ChartDataPoint> → AnalyticsPresenter
+    │
+    ▼
+LineChart composable (cubic bezier, gradient fill, tap tooltip)
+```
+
+#### Period Mapping
+
+| ChartPeriod | API `days` | Sampled Points | Labels |
+|-------------|-----------|---------------|--------|
+| WEEK | 7 | 7 | Mon, Tue, Wed, Thu, Fri, Sat, Sun |
+| MONTH | 30 | 4 | Week 1, Week 2, Week 3, Week 4 |
+| QUARTER | 90 | 3 | Jan, Feb, Mar |
+
+#### Error Handling
+
+If the API call fails (no network, rate limit, etc.), the Bitcoin chart gracefully shows an empty state while the bar and donut charts (backed by Room) continue working normally.
 
 ### Data Flow
 

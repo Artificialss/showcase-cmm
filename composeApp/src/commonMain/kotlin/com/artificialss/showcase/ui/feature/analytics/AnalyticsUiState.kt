@@ -7,7 +7,7 @@ sealed class AnalyticsUiState {
     data object Loading : AnalyticsUiState()
 
     data class Success(
-        val lineData: List<ChartDataPoint>,
+        val bitcoinData: List<ChartDataPoint>,
         val barData: List<ChartDataPoint>,
         val selectedPeriod: ChartPeriod,
     ) : AnalyticsUiState()

@@ -10,13 +10,13 @@ val BlueSecondaryDark = Color(0xFF64B5F6)
 val BlueTertiary = Color(0xFF0D47A1)
 val BlueTertiaryDark = Color(0xFFBBDEFB)
 
-// Green palette
-val GreenPrimary = Color(0xFF2E7D32)
-val GreenPrimaryDark = Color(0xFFA5D6A7)
-val GreenSecondary = Color(0xFF66BB6A)
-val GreenSecondaryDark = Color(0xFF81C784)
-val GreenTertiary = Color(0xFF1B5E20)
-val GreenTertiaryDark = Color(0xFFC8E6C9)
+// Green palette (brand: #347E67)
+val GreenPrimary = Color(0xFF347E67)
+val GreenPrimaryDark = Color(0xFF8CC5B1)
+val GreenSecondary = Color(0xFF5AA08A)
+val GreenSecondaryDark = Color(0xFF7BB8A4)
+val GreenTertiary = Color(0xFF1F5C4A)
+val GreenTertiaryDark = Color(0xFFB2D8CC)
 
 // Purple palette
 val PurplePrimary = Color(0xFF6A1B9A)
@@ -37,6 +37,9 @@ val BackgroundLight = Color(0xFFFEFBFF)
 val BackgroundDark = Color(0xFF1C1B1F)
 val ErrorColor = Color(0xFFB3261E)
 val ErrorDarkColor = Color(0xFFF2B8B5)
+
+// Brand
+val BrandGreen = Color(0xFF347E67)
 
 // Category colors for charts
 val CategoryFood = Color(0xFFFF7043)
