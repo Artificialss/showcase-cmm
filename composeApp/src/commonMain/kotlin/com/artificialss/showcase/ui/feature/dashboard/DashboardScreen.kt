@@ -26,6 +26,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.artificialss.showcase.domain.model.ChartDataPoint
@@ -59,6 +62,8 @@ import com.artificialss.showcase.ui.components.charts.LineChart
 import com.artificialss.showcase.ui.components.charts.LineChartEntry
 import com.artificialss.showcase.ui.feature.analytics.AnalyticsPresenter
 import com.artificialss.showcase.ui.feature.analytics.AnalyticsUiState
+import com.artificialss.showcase.ui.localization.AppStrings
+import com.artificialss.showcase.ui.localization.LocalAppStrings
 import com.artificialss.showcase.ui.theme.BluePrimary
 import com.artificialss.showcase.ui.theme.CategoryBills
 import com.artificialss.showcase.ui.theme.CategoryEntertainment
@@ -127,8 +132,9 @@ private fun DashboardContent(
             // Analytics section
             item { Spacer(modifier = Modifier.height(SECTION_DIVIDER)) }
             item {
+                val s = LocalAppStrings.current
                 Text(
-                    text = "Analytics",
+                    text = s.dashAnalytics,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
@@ -152,9 +158,18 @@ private fun DashboardContent(
                             onPeriodSelected = onPeriodSelected,
                         )
                     }
-                    item { LineChartCard(title = BITCOIN_PRICE_TITLE, data = analyticsState.bitcoinData) }
-                    item { BarChartCard(title = "Weekly Activity", data = analyticsState.barData) }
-                    item { AnalyticsDonutCard(title = "Category Breakdown", data = analyticsState.barData) }
+                    item {
+                        val s = LocalAppStrings.current
+                        LineChartCard(title = s.dashBitcoin, data = analyticsState.bitcoinData)
+                    }
+                    item {
+                        val s = LocalAppStrings.current
+                        BarChartCard(title = s.dashWeeklyActivity, data = analyticsState.barData)
+                    }
+                    item {
+                        val s = LocalAppStrings.current
+                        AnalyticsDonutCard(title = s.dashCategoryBreakdown, data = analyticsState.barData)
+                    }
                 }
             }
 
@@ -181,13 +196,14 @@ private fun BalanceCard(
     balance: Double,
     cardNumber: String,
 ) {
+    val s = LocalAppStrings.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
     ) {
         Column(modifier = Modifier.padding(CARD_PADDING)) {
             Text(
-                text = "Welcome, $userName",
+                text = "${s.dashWelcome}, $userName",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = LABEL_ALPHA),
             )
@@ -210,14 +226,15 @@ private fun BalanceCard(
 
 @Composable
 private fun QuickActionsRow() {
+    val s = LocalAppStrings.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
-        QuickActionButton(icon = Icons.AutoMirrored.Filled.Send, label = "Send")
-        QuickActionButton(icon = Icons.Default.Star, label = "Receive")
-        QuickActionButton(icon = Icons.Default.ShoppingCart, label = "Pay")
-        QuickActionButton(icon = Icons.Default.DateRange, label = "History")
+        QuickActionButton(icon = Icons.AutoMirrored.Filled.Send, label = s.dashSend)
+        QuickActionButton(icon = Icons.Default.Star, label = s.dashReceive)
+        QuickActionButton(icon = Icons.Default.ShoppingCart, label = s.dashPay)
+        QuickActionButton(icon = Icons.Default.DateRange, label = s.dashHistory)
     }
 }
 
@@ -248,12 +265,13 @@ private fun QuickActionButton(icon: ImageVector, label: String) {
 
 @Composable
 private fun SpendingOverview(spendingByCategory: Map<TransactionCategory, Double>) {
+    val s = LocalAppStrings.current
     val total = spendingByCategory.values.sum()
     val segments = spendingByCategory.entries
         .sortedByDescending { it.value }
         .map { (category, amount) ->
             DonutChartSegment(
-                label = category.label,
+                label = localizedCategory(category, s),
                 value = amount.toFloat(),
                 color = colorForCategory(category),
             )
@@ -262,7 +280,7 @@ private fun SpendingOverview(spendingByCategory: Map<TransactionCategory, Double
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(CARD_PADDING)) {
             Text(
-                text = "Spending by Category",
+                text = s.dashSpendingByCategory,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -270,7 +288,7 @@ private fun SpendingOverview(spendingByCategory: Map<TransactionCategory, Double
             DonutChart(
                 segments = segments,
                 centerValue = "$${"%,.0f".format(total)}",
-                centerLabel = "Total",
+                centerLabel = s.dashTotal,
             )
         }
     }
@@ -281,6 +299,7 @@ private fun RecentTransactionsCard(
     transactions: List<Transaction>,
     onSeeAllClick: () -> Unit,
 ) {
+    val s = LocalAppStrings.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(CARD_INNER_PADDING)) {
             Row(
@@ -289,12 +308,12 @@ private fun RecentTransactionsCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Recent Transactions",
+                    text = s.dashRecentTransactions,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "See all",
+                    text = s.dashSeeAll,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Medium,
@@ -324,7 +343,7 @@ private fun AllTransactionsSheet(transactions: List<Transaction>) {
             .padding(horizontal = CONTENT_PADDING),
     ) {
         Text(
-            text = "All Transactions",
+            text = LocalAppStrings.current.dashAllTransactions,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = SPACING_MD),
@@ -401,6 +420,7 @@ private fun PeriodSelector(
     selectedPeriod: ChartPeriod,
     onPeriodSelected: (ChartPeriod) -> Unit,
 ) {
+    val s = LocalAppStrings.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(CHIP_SPACING),
@@ -409,7 +429,20 @@ private fun PeriodSelector(
             FilterChip(
                 selected = period == selectedPeriod,
                 onClick = { onPeriodSelected(period) },
-                label = { Text(period.label) },
+                label = {
+                    Text(
+                        text = localizedPeriod(period, s),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -417,6 +450,7 @@ private fun PeriodSelector(
 
 @Composable
 private fun LineChartCard(title: String, data: List<ChartDataPoint>) {
+    val s = LocalAppStrings.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(CARD_PADDING)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -425,7 +459,7 @@ private fun LineChartCard(title: String, data: List<ChartDataPoint>) {
                 EmptyChartMessage()
             } else {
                 LineChart(
-                    entries = data.map { LineChartEntry(label = it.label, value = it.value.toFloat()) },
+                    entries = data.map { LineChartEntry(label = localizeChartLabel(it.label, s), value = it.value.toFloat()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -435,6 +469,7 @@ private fun LineChartCard(title: String, data: List<ChartDataPoint>) {
 
 @Composable
 private fun BarChartCard(title: String, data: List<ChartDataPoint>) {
+    val s = LocalAppStrings.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(CARD_PADDING)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -443,7 +478,7 @@ private fun BarChartCard(title: String, data: List<ChartDataPoint>) {
                 EmptyChartMessage()
             } else {
                 BarChart(
-                    entries = data.map { BarChartEntry(label = it.label, value = it.value.toFloat()) },
+                    entries = data.map { BarChartEntry(label = localizeChartLabel(it.label, s), value = it.value.toFloat()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -453,6 +488,7 @@ private fun BarChartCard(title: String, data: List<ChartDataPoint>) {
 
 @Composable
 private fun AnalyticsDonutCard(title: String, data: List<ChartDataPoint>) {
+    val s = LocalAppStrings.current
     val donutColors = listOf(
         BluePrimary, GreenPrimary, PurplePrimary,
         CategoryFood, CategoryTransport, CategoryEntertainment, CategoryShopping,
@@ -469,13 +505,13 @@ private fun AnalyticsDonutCard(title: String, data: List<ChartDataPoint>) {
                 DonutChart(
                     segments = data.mapIndexed { index, point ->
                         DonutChartSegment(
-                            label = point.label,
+                            label = localizeChartLabel(point.label, s),
                             value = point.value.toFloat(),
                             color = donutColors[index % donutColors.size],
                         )
                     },
                     centerValue = kotlin.math.round(total).toLong().toString(),
-                    centerLabel = "Total",
+                    centerLabel = LocalAppStrings.current.dashTotal,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -486,13 +522,48 @@ private fun AnalyticsDonutCard(title: String, data: List<ChartDataPoint>) {
 @Composable
 private fun EmptyChartMessage() {
     Text(
-        text = "No data available",
+        text = LocalAppStrings.current.dashNoData,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
 // endregion
+
+private fun localizedPeriod(period: ChartPeriod, s: AppStrings): String = when (period) {
+    ChartPeriod.WEEK -> s.chartPeriodWeek
+    ChartPeriod.MONTH -> s.chartPeriodMonth
+    ChartPeriod.QUARTER -> s.chartPeriodQuarter
+}
+
+private fun localizedCategory(category: TransactionCategory, s: AppStrings): String = when (category) {
+    TransactionCategory.FOOD -> s.catFood
+    TransactionCategory.TRANSPORT -> s.catTransport
+    TransactionCategory.ENTERTAINMENT -> s.catEntertainment
+    TransactionCategory.SHOPPING -> s.catShopping
+    TransactionCategory.BILLS -> s.catBills
+    TransactionCategory.HEALTH -> s.catHealth
+    TransactionCategory.TRAVEL -> s.catTravel
+    TransactionCategory.OTHER -> s.catOther
+}
+
+private fun localizeChartLabel(raw: String, s: AppStrings): String = when (raw) {
+    "Mon" -> s.chartMon
+    "Tue" -> s.chartTue
+    "Wed" -> s.chartWed
+    "Thu" -> s.chartThu
+    "Fri" -> s.chartFri
+    "Sat" -> s.chartSat
+    "Sun" -> s.chartSun
+    "Week 1" -> s.chartWeek1
+    "Week 2" -> s.chartWeek2
+    "Week 3" -> s.chartWeek3
+    "Week 4" -> s.chartWeek4
+    "Jan" -> s.chartJan
+    "Feb" -> s.chartFeb
+    "Mar" -> s.chartMar
+    else -> raw
+}
 
 @Composable
 private fun colorForCategory(category: TransactionCategory) = when (category) {
@@ -524,4 +595,3 @@ private val CHART_TOP_SPACING = 12.dp
 private val CHART_LOADING_HEIGHT = 120.dp
 private const val LABEL_ALPHA = 0.8f
 private const val CATEGORY_BG_ALPHA = 0.15f
-private const val BITCOIN_PRICE_TITLE = "Bitcoin Price"

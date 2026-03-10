@@ -9,4 +9,5 @@ data class ShopLocation(
     val rating: Float,
     val address: String,
     val hours: String,
+    val images: List<String>,
 )

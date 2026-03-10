@@ -1,19 +1,28 @@
 package com.artificialss.showcase
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -24,8 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.artificialss.showcase.ui.components.StyleBottomBar
 import com.artificialss.showcase.ui.components.TopNavigationBar
+import com.artificialss.showcase.ui.localization.LocalAppStrings
+import com.artificialss.showcase.ui.localization.englishStrings
+import com.artificialss.showcase.ui.localization.spanishStrings
 import com.artificialss.showcase.ui.feature.analytics.AnalyticsPresenterImpl
 import com.artificialss.showcase.ui.feature.components.ComponentsScreen
 import com.artificialss.showcase.ui.feature.dashboard.DashboardPresenterImpl
@@ -44,6 +58,8 @@ import com.artificialss.showcase.ui.navigation.MAIN_ROUTES
 import com.artificialss.showcase.ui.theme.AppStyleState
 import com.artificialss.showcase.ui.theme.ColorPalette
 import com.artificialss.showcase.ui.theme.FontStyle
+import com.artificialss.showcase.ui.theme.ShapeStyle
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.artificialss.showcase.ui.theme.ShowcaseTheme
 import com.artificialss.showcase.ui.theme.ThemeVariant
 import org.koin.compose.viewmodel.koinViewModel
@@ -60,25 +76,36 @@ private val ALL_ROUTES = listOf(
 
 @Composable
 fun App() {
-    var themeOrdinal by rememberSaveable { mutableIntStateOf(ThemeVariant.LIGHT.ordinal) }
+    val systemDark = isSystemInDarkTheme()
+    var themeOrdinal by rememberSaveable {
+        mutableIntStateOf(if (systemDark) ThemeVariant.DARK.ordinal else ThemeVariant.LIGHT.ordinal)
+    }
     var fontOrdinal by rememberSaveable { mutableIntStateOf(FontStyle.DEFAULT.ordinal) }
     var colorOrdinal by rememberSaveable { mutableIntStateOf(ColorPalette.GREEN.ordinal) }
+    var shapeOrdinal by rememberSaveable { mutableIntStateOf(ShapeStyle.ROUNDED.ordinal) }
     var routeIndex by rememberSaveable { mutableIntStateOf(0) }
     var isLoggedIn by rememberSaveable { mutableStateOf(false) }
     var showWelcomeDialog by rememberSaveable { mutableStateOf(false) }
+    var isSpanish by rememberSaveable { mutableStateOf(false) }
+    val strings = if (isSpanish) spanishStrings() else englishStrings()
 
     val appStyle = AppStyleState(
         themeVariant = ThemeVariant.entries[themeOrdinal],
         fontStyle = FontStyle.entries[fontOrdinal],
         colorPalette = ColorPalette.entries[colorOrdinal],
+        shapeStyle = ShapeStyle.entries[shapeOrdinal],
     )
     val currentRoute = ALL_ROUTES[routeIndex]
 
     ShowcaseTheme(appStyle = appStyle) {
+        CompositionLocalProvider(LocalAppStrings provides strings) {
         val showChrome = currentRoute in MAIN_ROUTES
 
         if (showWelcomeDialog) {
-            WelcomeDialog(onDismiss = { showWelcomeDialog = false })
+            WelcomeDialog(
+                onDismiss = { showWelcomeDialog = false },
+                onToggleLanguage = { isSpanish = !isSpanish },
+            )
         }
 
         if (showChrome) {
@@ -96,8 +123,24 @@ fun App() {
                             themeOrdinal = it.themeVariant.ordinal
                             fontOrdinal = it.fontStyle.ordinal
                             colorOrdinal = it.colorPalette.ordinal
+                            shapeOrdinal = it.shapeStyle.ordinal
                         },
                     )
+                },
+                floatingActionButton = {
+                    if (currentRoute == AppRoute.Dashboard || currentRoute == AppRoute.Map) {
+                        FloatingActionButton(
+                            onClick = { isSpanish = !isSpanish },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = FAB_TRANSLATE_DESC,
+                                modifier = Modifier.size(FAB_ICON_SIZE),
+                            )
+                        }
+                    }
                 },
             ) { innerPadding ->
                 NavigationHost(
@@ -109,6 +152,7 @@ fun App() {
                         showWelcomeDialog = true
                         routeIndex = ALL_ROUTES.indexOf(AppRoute.Dashboard)
                     },
+                    shapeStyle = appStyle.shapeStyle,
                     modifier = Modifier.padding(innerPadding),
                 )
             }
@@ -122,17 +166,20 @@ fun App() {
                     showWelcomeDialog = true
                     routeIndex = ALL_ROUTES.indexOf(AppRoute.Dashboard)
                 },
+                shapeStyle = appStyle.shapeStyle,
                 modifier = Modifier.fillMaxSize(),
             )
         }
+        } // CompositionLocalProvider
     }
 }
 
 @Composable
-private fun WelcomeDialog(onDismiss: () -> Unit) {
-    androidx.compose.ui.window.Dialog(
+private fun WelcomeDialog(onDismiss: () -> Unit, onToggleLanguage: () -> Unit) {
+    val s = LocalAppStrings.current
+    Dialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
             modifier = Modifier
@@ -142,48 +189,49 @@ private fun WelcomeDialog(onDismiss: () -> Unit) {
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = DIALOG_ELEVATION,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(DIALOG_CONTENT_PADDING),
-            ) {
-                Text(
-                    text = "Artificialss Showcase",
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(DIALOG_CONTENT_PADDING),
+                ) {
+                    Spacer(modifier = Modifier.height(DIALOG_TRANSLATE_OFFSET))
+                    Text(
+                        text = s.welcomeTitle,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_XS))
                 Text(
-                    text = "Technical Demo Application",
+                    text = s.welcomeSubtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = DIALOG_SPACING_MD))
 
-                SectionTitle("Who we are")
+                SectionTitle(s.welcomeWhoWeAre)
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_XS))
                 Text(
-                    text = "Artificialss builds cross-platform mobile apps " +
-                        "with modern architectures and pixel-perfect UI.",
+                    text = s.welcomeWhoWeAreText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
 
-                SectionTitle("Highlights")
+                SectionTitle(s.welcomeHighlights)
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_XS))
-                BulletPoint("Canvas charts with touch tooltips")
-                BulletPoint("Interactive platform map")
-                BulletPoint("Image gallery with async loading")
-                BulletPoint("MVP + Room + Koin + Apollo")
-                BulletPoint("Live theme, font, and color switching")
+                BulletPoint(s.welcomeHighlight1)
+                BulletPoint(s.welcomeHighlight2)
+                BulletPoint(s.welcomeHighlight3)
+                BulletPoint(s.welcomeHighlight4)
+                BulletPoint(s.welcomeHighlight5)
 
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
 
                 Text(
-                    text = "Use the bottom bar to switch themes, fonts, and colors in real time.",
+                    text = s.welcomeThemeHint,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -191,7 +239,7 @@ private fun WelcomeDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_MD))
 
                 Text(
-                    text = "Built with Kotlin Multiplatform + Compose",
+                    text = s.welcomeBuiltWith,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.outline,
                     textAlign = TextAlign.Center,
@@ -200,11 +248,25 @@ private fun WelcomeDialog(onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(DIALOG_SPACING_SM))
 
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(s.welcomeExplore)
+                    }
+                }
+
+                IconButton(
+                    onClick = onToggleLanguage,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(DIALOG_TRANSLATE_PADDING),
                 ) {
-                    Text("Explore the App")
+                    Icon(
+                        imageVector = Icons.Default.Translate,
+                        contentDescription = FAB_TRANSLATE_DESC,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }
@@ -236,6 +298,7 @@ private fun NavigationHost(
     isLoggedIn: Boolean,
     onRouteChanged: (AppRoute) -> Unit,
     onLoginSuccess: () -> Unit,
+    shapeStyle: ShapeStyle = ShapeStyle.ROUNDED,
     modifier: Modifier = Modifier,
 ) {
     when (currentRoute) {
@@ -280,7 +343,7 @@ private fun NavigationHost(
         }
         AppRoute.Gallery -> {
             val presenter = koinViewModel<GalleryPresenterImpl>()
-            GalleryScreen(presenter = presenter, modifier = modifier)
+            GalleryScreen(presenter = presenter, shapeStyle = shapeStyle, modifier = modifier)
         }
         AppRoute.Profile -> {
             val presenter = koinViewModel<ProfilePresenterImpl>()
@@ -290,6 +353,8 @@ private fun NavigationHost(
     }
 }
 
+private val FAB_ICON_SIZE = 24.dp
+private const val FAB_TRANSLATE_DESC = "Toggle language"
 private val DIALOG_PADDING = 24.dp
 private val DIALOG_CORNER_RADIUS = 20.dp
 private val DIALOG_ELEVATION = 6.dp
@@ -297,4 +362,6 @@ private val DIALOG_CONTENT_PADDING = 24.dp
 private val DIALOG_SPACING_XS = 4.dp
 private val DIALOG_SPACING_SM = 8.dp
 private val DIALOG_SPACING_MD = 12.dp
+private val DIALOG_TRANSLATE_PADDING = 8.dp
+private val DIALOG_TRANSLATE_OFFSET = 32.dp
 private val BULLET_VERTICAL_PADDING = 2.dp

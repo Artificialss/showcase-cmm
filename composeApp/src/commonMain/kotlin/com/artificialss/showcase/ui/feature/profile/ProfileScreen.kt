@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -181,16 +182,18 @@ private fun ChatBottomSheet(
         exit = slideOutVertically { it },
         modifier = Modifier.fillMaxSize(),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = SCRIM_ALPHA))
                 .clickable(onClick = onDismiss),
             contentAlignment = Alignment.BottomCenter,
         ) {
+            val sheetHeight = minOf(maxHeight * SHEET_HEIGHT_FRACTION, SHEET_MAX_HEIGHT)
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(sheetHeight)
                     .clickable(enabled = false, onClick = {}),
                 shape = RoundedCornerShape(topStart = SHEET_CORNER, topEnd = SHEET_CORNER),
                 tonalElevation = SHEET_ELEVATION,
@@ -223,8 +226,7 @@ private fun ChatSheetContent(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(SHEET_HEIGHT)
+            .fillMaxSize()
             .padding(SHEET_PADDING),
     ) {
         ChatSheetHeader(onDismiss = onDismiss)
@@ -235,7 +237,7 @@ private fun ChatSheetContent(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(SPACING_SM),
         ) {
-            items(items = messages, key = { messages.indexOf(it) }) { message ->
+            items(items = messages, key = { it.id }) { message ->
                 ChatBubble(message = message)
             }
             if (isLoading) {
@@ -635,7 +637,8 @@ private val AVATAR_GRID_HEIGHT = 220.dp
 private const val AVATAR_GRID_COLUMNS = 3
 
 // Chat bottom sheet
-private val SHEET_HEIGHT = 400.dp
+private val SHEET_MAX_HEIGHT = 400.dp
+private const val SHEET_HEIGHT_FRACTION = 0.75f
 private val SHEET_CORNER = 20.dp
 private val SHEET_ELEVATION = 8.dp
 private val SHEET_PADDING = 16.dp

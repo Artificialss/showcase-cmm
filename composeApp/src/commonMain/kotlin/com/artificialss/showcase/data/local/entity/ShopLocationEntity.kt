@@ -13,4 +13,5 @@ data class ShopLocationEntity(
     val rating: Float,
     val address: String,
     val hours: String,
+    val images: String,
 )

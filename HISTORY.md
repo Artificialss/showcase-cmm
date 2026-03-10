@@ -571,14 +571,550 @@
 
 ---
 
+---
+
+## Session 5 — Production Hardening & Security Audit
+
+> Full codebase review and production-readiness fixes.
+
+---
+
+### 61. Production Security Audit & Fixes
+
+**Prompt:**
+> "lets finish this for production, check all the code improve any security concerns, the only thing we are missing is the icon but everything else is fine"
+
+**Result:** Full codebase audit (82 Kotlin files, manifest, build config, dependencies). Confirmed:
+- `local.properties` is gitignored — Maps API key not in version control
+- All network calls use HTTPS
+- No `!!` operator anywhere, no wildcard imports, no hardcoded credentials
+- Only INTERNET permission in manifest
+
+Fixes applied:
+- **`RemoteBitcoinRepository`**: Moved `Json { ignoreUnknownKeys = true }` from being instantiated on every call into the companion object (performance + correctness)
+- **`FeatureModules`**: Removed commented-out `RemoteGalleryRepository` binding (rule compliance — no commented-out code blocks)
+- **`App.kt`**: Added proper `import androidx.compose.ui.window.Dialog` / `DialogProperties` instead of fully-qualified names
+- **`ProfileUiState`**: Added `id: String` field to `ChatMessage` for stable, O(1) `LazyColumn` keys
+- **`ProfilePresenter`**: Assigned sequential `"msg_$index"` IDs to all `ChatMessage` instances
+- **`ProfileScreen`**: Updated `LazyColumn` key from `{ messages.indexOf(it) }` (O(n), non-unique) to `{ it.id }`
+- **`build.gradle.kts`**: Enabled R8 minification (`isMinifyEnabled = true`, `isShrinkResources = true`) for release builds
+- **`proguard-rules.pro`**: Created comprehensive ProGuard rules covering Kotlin metadata, kotlinx.serialization, Koin, Room, Apollo, Ktor, OkHttp, Coil, and all domain/entity models
+
+Build verified: `BUILD SUCCESSFUL`
+
+---
+
+### 62. Landscape (Horizontal) UI Improvements
+
+**Prompt:**
+> "can you check the horizontal functionality to see if there is any ui improvement we have to do"
+
+**Result:** Full landscape audit across all 10 screen and component files. Two real issues fixed:
+
+- **`ProfileScreen.kt` — Chat sheet clipped in landscape**: `ChatBottomSheet` had a hardcoded `height(400.dp)` on its inner Column. On a landscape phone (~360dp viewport) this overflows the screen, hiding the quick-action chips and bottom area. Fixed by replacing the `Box` with `BoxWithConstraints`, computing an adaptive `sheetHeight = minOf(maxHeight * 0.75f, 400.dp)`, applying the height to the `Surface`, and changing the Column to `fillMaxSize()` so the `weight(1f)` LazyColumn continues to work correctly.
+
+- **`LoginScreen.kt` — Single-column layout forces awkward scroll in landscape**: The existing layout used `Modifier.weight(1f)` spacers inside a scrollable `Column` (which are 0dp in a scrollable container — they have no effect), leaving the form top-aligned and requiring vertical scroll in landscape (~400dp height). Replaced with a `BoxWithConstraints` dispatch: portrait keeps the existing scrollable single-column layout (cleaned up weight spacers); landscape shows a **two-column layout** — branding icon + title centered on the left half, form fields scrollable on the right half, separated by a `VerticalDivider`. Extracted shared `LoginFormContent` composable to avoid duplication.
+
+Build verified: `BUILD SUCCESSFUL`
+
+---
+
 <div align="center">
 
 <br>
 
-**Total prompts:** 60 | **Sessions:** 4 | **Files created/modified:** 80+
+---
+
+### 63. Period Chip Color Fix + Shape Style System
+
+**Prompt:**
+> "lets work in the design, the buttons that are over the bitcoin graph we should make them follow the color change functionality we have in the bottom. can we add any other style functionality to the bottom bar?"
+
+**Result:**
+
+**Period chip color fix:** `FilterChip` selected state defaults to `secondaryContainer` which doesn't visually track the primary color change. Added explicit `FilterChipDefaults.filterChipColors(selectedContainerColor = primary, selectedLabelColor = onPrimary)` to both `DashboardScreen` and `AnalyticsScreen` period selectors. Chips now show the active palette color (Blue/Green/Purple) when selected.
+
+**New Shape Style dimension:** Added a 4th style axis to the live-switching system:
+- **`ShapeStyle.kt`** — new enum: `ROUNDED` / `SQUARE` / `PILL`
+- **`Shape.kt`** — replaced static `ShowcaseShapes` with `shapesFor(ShapeStyle)` function returning the appropriate `Shapes` object (4dp→24dp rounded corners / 0dp square / 50% pill)
+- **`AppStyleState.kt`** — added `shapeStyle: ShapeStyle = ShapeStyle.ROUNDED` field
+- **`Theme.kt`** — `MaterialTheme` now uses `shapesFor(appStyle.shapeStyle)` — shape switching applies to every Card, Button, Chip, Dialog, and TextField corner radius app-wide, instantly and live
+- **`App.kt`** — added `shapeOrdinal` as `rememberSaveable { mutableIntStateOf(...) }` for rotation survival; wired into `AppStyleState` and `onStyleChanged`
+- **`StyleBottomBar.kt`** — added 4th toggle with `Icons.Default.RoundedCorner` icon cycling Round→Square→Pill; also extracted each toggle into its own private composable (`ThemeToggle`, `FontToggle`, `ColorToggle`, `ShapeToggle`) for clarity, and fixed a pre-existing indentation bug in the closing braces
+
+Build verified: `BUILD SUCCESSFUL`
+
+---
+
+---
+
+## Session 6 — Polish, Color System Fixes & Production Readiness
+
+---
+
+### 64. Gallery Circular Images (Pill Mode) + Loading Placeholder Fix
+
+**Prompt:**
+> "in the gallery for pill the images can be circular" + "also fix this to show the same image whent ir loads as the one for error"
+
+**Result:**
+- **`GalleryScreen.kt`** — Added `shapeStyle: ShapeStyle` parameter threaded through `GalleryScreen` → `GalleryContent` → `GalleryGrid`/`GalleryList` → `GalleryItemCard`/`GalleryListItem`; when `ShapeStyle.PILL`, grid images get `padding(8.dp).clip(CircleShape)` and list thumbnails get `clip(CircleShape)`. `ImageLoadingPlaceholder` now shows the same `BrokenImage` icon on `errorContainer` background as `ImageErrorPlaceholder` (renamed to `ImagePlaceholder` for shared use).
+- **`App.kt`** — Added `shapeStyle: ShapeStyle` parameter to `NavigationHost`; passed `appStyle.shapeStyle` at both call sites; wired through to `GalleryScreen`.
+
+---
+
+### 65. Color Palette Not Affecting QuickActions / Edit Profile
+
+**Prompt:**
+> "the edit profile is not changing form the buttons over spending categories is not changing colors"
+
+**Result:**
+- **`Color.kt`** — Added missing light/dark container colors (`BlueContainerLight`, `GreenContainerLight`, `PurpleContainerLight`, their `On*` counterparts), dark-mode containers (`BlueContainerDark` etc.), and palette-specific `outline` colors (`BlueOutline`, `GreenOutline`, `PurpleOutline`, `OutlineDark`).
+- **`Theme.kt`** — All six color schemes now explicitly set `onPrimary`, `primaryContainer`, `onPrimaryContainer`, and `outline`. `QuickActionsRow` (uses `primaryContainer`) and `OutlinedButton` (border uses `outline`) now change correctly when switching palettes.
+
+---
+
+### 66. FilterChip Selected Color Not Updating
+
+**Prompt:**
+> "the chips selected color is not changing with the change color functionality"
+
+**Result:**
+- Root cause was same as above (#65): `primaryContainer` and `outline` not set per-palette. Fixed by the color scheme update in Theme.kt. `FilterChip.selectedContainerColor = MaterialTheme.colorScheme.primary` now correctly shows the active palette's primary color.
+
+---
+
+### 67. StyleBottomBar Height Variation
+
+**Prompt:**
+> "the bottom bar changes height sizes when changing options, dont lat it variate the sizes of the labels make them static"
+
+**Result:**
+- **`StyleBottomBar.kt`** — Added `widthIn(min = BADGE_MIN_WIDTH = 52.dp)` and `maxLines = 1` to badge `Text`, preventing width jumps between "Pill"/"Round"/"Square"/"Dark"/"Light" etc. from shifting other elements.
+
+---
+
+### 68. Login Screen Top Overlap + Bottom Hidden Text
+
+**Prompt:**
+> "in the login screen the bottom text is hiding behind the nav bar, there is a weird thing in the top of welcome lets remove that"
+
+**Result:**
+- **`LoginScreen.kt`** — Calculated `statusBarHeight` and `navBarHeight` from `WindowInsets` and applied them as `padding(top = statusBarHeight, bottom = navBarHeight)` on the `BoxWithConstraints`. The `StatusBarBackground` green box now shows correctly above the content (not behind it), and the footer text is fully visible above the navigation bar. Reduced the portrait top `Spacer` from `SPACING_XL(40dp)` to `SPACING_MD(16dp)` since insets now handle the status bar offset.
+
+---
+
+### 69. Dark Mode Text Color
+
+**Prompt:**
+> "in darkmode lets fix the text color because its looking strange with purple and blue, white should be fine for text"
+
+**Result:**
+- **`Theme.kt`** — All three dark color schemes now use the same primary colors as light mode (`PurplePrimary`, `BluePrimary`, `GreenPrimary`) with `onPrimary = Color.White`, `onSurface = Color.White`, `onBackground = Color.White`. BalanceCard stays dark and accent-colored in dark mode with white text, consistent with light mode appearance.
+
+Build verified: `BUILD SUCCESSFUL`
+
+---
+
+### 70. Bitcoin API Session Cache
+
+**Prompt:**
+> "after loading the bitcoin api save the data so we dont call the api a lot of times, load data 1 time per sesion and seve it in the lifecycle if user closes and opens the app fetch the information again"
+
+**Result:**
+- **`RemoteBitcoinRepository.kt`** — Added `private val cache = mutableMapOf<ChartPeriod, List<ChartDataPoint>>()`. On each `getBitcoinPrices()` call, the cache is checked first and returned immediately if hit; only fetches from CoinGecko on miss. Cache lives for the process lifetime (Koin `single<>` scope) and clears on app restart.
+
+---
+
+### 71. Gallery Bottom Padding Fix
+
+**Prompt:**
+> "the bottom part of the gallery finish a little before the bottom bar lets fix that"
+
+**Result:**
+- **`GalleryScreen.kt`** — Added `GRID_BOTTOM_PADDING = 16.dp` to `contentPadding` bottom on both `LazyVerticalGrid` and `LazyColumn`. Content now scrolls fully above the bottom bar.
+
+---
+
+### 72. Remove Card Behind Pill Gallery Images
+
+**Prompt:**
+> "remove the card behind the image of the gallery pill items"
+
+**Result:**
+- **`GalleryScreen.kt`** — In Pill mode, `GalleryItemCard` now renders bare `SubcomposeAsyncImage` with `clip(CircleShape)` and `clickable` — no `Card` wrapper. Non-pill mode keeps the `Card`.
+
+---
+
+### 73. StyleBottomBar Label Width Iterations
+
+**Prompts:**
+> "extend the bottom nav bar label width to 30.dp" → 100.dp → 500.dp → 50.dp → "for landscape 100.dp, portrait 60.dp"
+
+**Result:**
+- **`StyleBottomBar.kt`** — Switched from fixed `widthIn(min=...)` to adaptive `BoxWithConstraints` that sets `badgeWidth = if (maxWidth > maxHeight) BADGE_WIDTH_LANDSCAPE else BADGE_WIDTH_PORTRAIT` (100dp landscape, 60dp portrait). Width threaded through all four toggle composables. `maxLines = 1` and `TextAlign.Center` keep labels stable at all times.
+
+---
+
+### 74. System Dark/Light Mode Initial Theme
+
+**Prompt:**
+> "read the default dark/light mode and start with the system default in the login, check the login screen to see if there is any improvement we have to do for dark mode"
+
+**Result:**
+- **`App.kt`** — Added `val systemDark = isSystemInDarkTheme()`. `themeOrdinal` is now initialized from the system preference: `if (systemDark) ThemeVariant.DARK.ordinal else ThemeVariant.LIGHT.ordinal`.
+
+---
+
+### 75. Maps API Key Security
+
+**Prompt:**
+> "lets hide the maps sdk id for prod not sure if that is done can we hide that from hackers?"
+
+**Result:** Confirmed the Maps API key was already secured via `local.properties` (gitignored) → Gradle manifest placeholder → `${MAPS_API_KEY}` in `AndroidManifest.xml`. No key in version control.
+
+---
+
+### 76. Bottom Bar Text + Icon Unified Click
+
+**Prompt:**
+> "make the text and the icons have the same click function in the bottom nav bar"
+
+**Result:**
+- **`StyleBottomBar.kt`** — Added `Modifier.clickable(indication = null, interactionSource = null, onClick = onClick)` to the `StyleToggle` Row, making both the icon and badge label trigger the same action. Ripple disabled to avoid double-animation with the `IconButton`.
+
+---
+
+### 77. Delete Button Dark Mode Color Fix
+
+**Prompt:**
+> "the delete button looks weird on darkmode keep the same red as light"
+
+**Result:**
+- **`Theme.kt`** — All dark color schemes now explicitly set `error = ErrorColor` (same `Color(0xFFB3261E)` red as light mode), preventing M3 dark defaults from changing the error/delete button color.
+
+---
+
+### 78. Login Dark Mode — Green Overlap Fix + Welcome Back White
+
+**Prompts:**
+> "in the login page the welcome back and remember me make them white for darkmode"
+> "now everything looks green in darkmode" → "in the login not all the screens"
+> "lets revert the changes in the login to the point the welcome back was black"
+> "change welcome back color to white for darkmode"
+
+**Result:**
+- **`LoginScreen.kt`** — Outer `Box` uses `background(MaterialTheme.colorScheme.background)` (not hardcoded white). All `BrandGreen` references replaced with `MaterialTheme.colorScheme.primary`. "Welcome Back" text uses `color = MaterialTheme.colorScheme.onBackground` — white in dark mode, near-black in light. `Surface` wrapper (which caused the full-screen green tint) was reverted; only the title text gets the explicit color.
+
+---
+
+### 79. Green Dark Mode Primary Color
+
+**Prompt:**
+> "the green is bad for dark mode not sure for light but here is the correct green 347e67"
+
+**Result:**
+- **`Color.kt`** — `GreenPrimary = Color(0xFF347E67)` confirmed as brand green.
+- **`Theme.kt`** — `greenDarkScheme` updated to use `GreenPrimary` directly with `onPrimary = Color.White` (removed incorrect lighter teal `GreenPrimaryDark` variant for dark mode). All dark schemes set `onSurface = Color.White`, `onBackground = Color.White`.
+
+---
+
+---
+
+## Session 7 — Color Palettes, Fonts & Map Restaurant Overhaul
+
+---
+
+### 80. Remember Me Text White in Dark Mode
+
+**Prompt:**
+> "make the remember me text white for dark mode"
+
+**Result:**
+- **`LoginScreen.kt`** — Added `color = MaterialTheme.colorScheme.onBackground` to the "Remember me" `Text` — white in dark mode, near-black in light.
+
+---
+
+### 81. Remove Bottom Bar Touch Ripple
+
+**Prompt:**
+> "remove the ontouch animation in the bottom bar, the shade looks weird"
+
+**Result:**
+- **`StyleBottomBar.kt`** — Changed `Modifier.clickable(onClick = onClick)` to `Modifier.clickable(indication = null, interactionSource = null, onClick = onClick)` on the `StyleToggle` Row, removing the ripple shade while keeping tap functionality.
+
+---
+
+### 82. Purple Primary Color → #885484
+
+**Prompt:**
+> "lets change the purple to #885484"
+
+**Result:**
+- **`Color.kt`** — `PurplePrimary = Color(0xFF885484)` (muted mauve-purple, more professional than the previous deep violet `#6A1B9A`).
+
+---
+
+### 83. Orange Color Palette (#F87434)
+
+**Prompt:**
+> "lets add also the orange option f87434"
+
+**Result:**
+- **`ColorPalette.kt`** — Added `ORANGE` entry.
+- **`Color.kt`** — Full orange palette: `OrangePrimary`, `OrangePrimaryDark`, secondary, tertiary, light/dark containers, `OrangeOutline`.
+- **`Theme.kt`** — `orangeLightScheme` and `orangeDarkScheme` added, wired in `colorSchemeFor`.
+
+---
+
+### 84. Gold Color Palette
+
+**Prompt:**
+> "lets add a yellow (that looks like gold dont have a color for that chose something nice)"
+
+**Result:**
+- **`ColorPalette.kt`** — Added `GOLD` entry.
+- **`Color.kt`** — Gold palette: `GoldPrimary = Color(0xFFB8860B)` (dark goldenrod) for light, `GoldPrimaryDark = Color(0xFFFFD966)` warm yellow for dark.
+- **`Theme.kt`** — `goldLightScheme` and `goldDarkScheme` added. Dark scheme uses `onPrimary = Color(0xFF3A2800)` (dark brown) to remain legible on the bright gold.
+
+---
+
+### 85. Three New Font Styles (Light, Bold, Italic)
+
+**Prompt:**
+> "lets add 3 fonts more also and make the light it ones bold to show and another one italic"
+
+**Result:**
+- **`FontStyle.kt`** — Added `LIGHT`, `BOLD`, `ITALIC` entries.
+- **`Type.kt`** — Refactored `typographyForStyle` to compute weight tiers per style: `LIGHT` uses ExtraLight/Light weights; `BOLD` uses ExtraBold/Bold/SemiBold weights; `ITALIC` applies `FontStyle.Italic` to all text styles.
+
+---
+
+### 86. All Font Styles Use Distinct Font Families
+
+**Prompt:**
+> "make the 5 letter type different fonts dont 'recycle'"
+
+**Result:**
+- **`Type.kt`** — Each of the 6 font styles now maps to a unique family/feel:
+  - `DEFAULT` → `FontFamily.Default` (Roboto)
+  - `SERIF` → `FontFamily.Serif` (Noto Serif)
+  - `MONOSPACE` → `FontFamily.Monospace`
+  - `LIGHT` → `FontFamily.SansSerif` + ExtraLight weights
+  - `BOLD` → `FontFamily.Default` + ExtraBold weights
+  - `ITALIC` → `FontFamily.Cursive` + Italic style (handwriting look)
+
+---
+
+### 87. Red Color Palette (Professional Crimson)
+
+**Prompt:**
+> "lets add red color a profesional one"
+
+**Result:**
+- **`ColorPalette.kt`** — Added `RED` entry.
+- **`Color.kt`** — `RedPrimary = Color(0xFFC62828)` (deep crimson); `RedPrimaryDark = Color(0xFFEF9A9A)` (soft rose for dark mode legibility). Full container and outline set.
+- **`Theme.kt`** — `redLightScheme` and `redDarkScheme` added; dark scheme's `onPrimary = Color(0xFF690005)` (dark crimson) keeps white-on-red contrast valid.
+
+---
+
+### 88. Map Icons Follow Color Palette
+
+**Prompt:**
+> "lets change the map a little, make the icons in the map follow the color selected"
+
+**Result:**
+- **`PlatformMapView.android.kt`** — Reads `MaterialTheme.colorScheme.primary`, converts to HSV hue via `android.graphics.Color.colorToHSV()`, applies `BitmapDescriptorFactory.defaultMarker(hue)` to every `Marker`. Marker color updates live when the palette is switched.
+- iOS was already using `MaterialTheme.colorScheme.primary` for custom pin drawing — no change needed.
+
+---
+
+### 89. Map → Restaurant Food Menu with Bottom Sheet Photos
+
+**Prompt:**
+> "make it a food menu que some free url of dishes and lets generate menu type information or like restaurants with 3 images each in the bottom sheet"
+
+**Result:**
+- **`ShopLocation.kt`** — Added `images: List<String>` field.
+- **`ShopLocationEntity.kt`** — Added `images: String` (pipe-separated for Room storage).
+- **`ShopLocationMapper.kt`** — `toDomain` splits on `|`; `toEntity` joins with `|`.
+- **`AppDatabase.kt`** — Version bumped to 2 (destructive migration triggers re-seed).
+- **`ShopLocationMockGenerator.kt`** — Replaced 10 generic shops with 10 themed restaurants (La Pizzeria Roma, Sushi Kyoto, El Asador, Café de Paris, Thai Garden, Burger Lab, La Paella, Pasta Fresca, The Green Bowl, Sweet Dreams). Each has 3 curated Unsplash food photo URLs.
+- **`MapScreen.kt`** — Full bottom sheet redesign: 3-photo horizontal strip with `SubcomposeAsyncImage`, restaurant name + star rating (amber star), cuisine type in primary color, address, hours, Navigate button.
+
+---
+
+### 90. Volume Slider Inactive Track Gray
+
+**Prompt:**
+> "fix the volume seekbars unselected bar color to a gray in light mode and a dark light gray for darkmode"
+
+**Result:**
+- **`ComponentsScreen.kt`** — Volume slider's `inactiveTrackColor` changed from `MaterialTheme.colorScheme.errorContainer` (pinkish) to `MaterialTheme.colorScheme.outlineVariant` — a neutral medium gray in light mode, dark gray in dark mode.
+
+---
+
+### 91. Test Refresh + History Update
+
+**Prompt:**
+> "remember refresh the test cases, the file with the new data mock data, the history file"
+
+**Result:**
+- **`MockGeneratorConsistencyTest.kt`** — Updated: renamed `shopLocation*` tests to `restaurant*`, added `restaurantGeneratorHasThreeImagesEach`, `restaurantImagesAreValidHttpsUrls`, `restaurantRatingsAreInValidRange`, `restaurantIdsHaveCorrectPrefix`, and `restaurantCountIsConstrainedByMaxCatalog` tests.
+- **`HISTORY.md`** — This file updated with all unlogged Session 6 continuation items (70–79) and full Session 7 items (80–91).
+
+---
+
+## Session 8 — Localization Completion
+
+---
+
+### 92. MapScreen Localization
+
+**Result:**
+- **`MapScreen.kt`** — `RestaurantDetailSheet` now reads `LocalAppStrings.current` for address label, hours label, and navigate button text. Removed `LABEL_ADDRESS`, `LABEL_HOURS`, `NAVIGATE_LABEL` constants. Import was already in place from previous session.
+
+---
+
+### 93. DashboardScreen Localization
+
+**Result:**
+- **`DashboardScreen.kt`** — Added `import com.artificialss.showcase.ui.localization.LocalAppStrings`. All hardcoded strings replaced with `LocalAppStrings.current` lookups: Analytics section header, Bitcoin Price chart title, Weekly Activity, Category Breakdown, Spending by Category, Total (donut center), Recent Transactions, See all, All Transactions, Send/Receive/Pay/History quick actions, No data available. Removed `BITCOIN_PRICE_TITLE` constant.
+
+---
+
+### 94. GalleryScreen Localization
+
+**Result:**
+- **`GalleryScreen.kt`** — Added `import com.artificialss.showcase.ui.localization.LocalAppStrings`. Gallery title reads `LocalAppStrings.current.galleryTitle`. Removed `GALLERY_TITLE` constant.
+
+---
+
+### 95. Build Verification
+
+**Result:**
+- `./gradlew composeApp:compileDebugKotlinAndroid` → **BUILD SUCCESSFUL** in 19s. All localization wiring compiles cleanly.
+
+---
+
+---
+
+## Session 9 — UI Polish, Map Badge & Full Localization
+
+---
+
+### 96. Translate FAB Scoped to Home & Map Only
+
+**Prompt:**
+> "just add the translate option to the home and, map screen the remove it from the login"
+
+**Result:**
+- **`App.kt`** — FAB `floatingActionButton` slot now conditionally renders only when `currentRoute == AppRoute.Dashboard || currentRoute == AppRoute.Map`. All other routes (Gallery, Profile, Components, Login) show no FAB.
+- **`TopNavigationBar.kt`** — `labelFor()` reverted from `@Composable` + `LocalAppStrings` to a plain function with static English `const val` constants. Nav tab labels no longer translate.
+
+---
+
+### 97. AI Powered Badge + Map & Dashboard Full Translation
+
+**Prompt:**
+> "add a label in the top of the map padding 10.dp from the top nav, that says AI powered circular label following the design styles. also fix the translation in the map and home view there are some labels in the charts that dont translate and some options in the maps data that dont translate fix that"
+
+**Result:**
+- **`MapScreen.kt`** — New `AiPoweredBadge` composable: pill-shaped `Surface` (primaryContainer, 50dp radius, 4dp shadow), `AutoAwesome` icon + localized "AI Powered" / "Potenciado por IA" text, aligned `TopCenter` with 10dp top padding. Added `localizedCuisine()` helper; `RestaurantHeader` now shows translated cuisine type.
+- **`AppStrings.kt`** — Added 30+ new fields: `mapAiPowered`, 10 cuisine types, 3 chart periods, 8 transaction categories, 14 bar chart time labels (days/weeks/months) — English and Spanish.
+- **`DashboardScreen.kt`** — Added `localizedPeriod()`, `localizedCategory()`, `localizeChartLabel()` pure helpers. Wired to `PeriodSelector` chips, `SpendingOverview` donut segments, and `BarChartCard` entries.
+
+---
+
+### 98. Category Breakdown Donut Legend Translation Fix
+
+**Prompt:**
+> "the bullet points of category breakdown is not translating"
+
+**Result:**
+- **`DashboardScreen.kt`** — `AnalyticsDonutCard` was mapping `point.label` directly. Added `val s = LocalAppStrings.current` and applied `localizeChartLabel(point.label, s)` to all donut segment labels.
+
+---
+
+### 99. Period Chip Text Centered + Bitcoin Chart Label Translation
+
+**Prompt:**
+> "in analytics over the bitcoin chart change the buttons text to be max line 1 and elipse ... at the end if oversize also fix the texts translations inside the chart data there are dates and Week not changing for Semana"
+
+**Result:**
+- **`DashboardScreen.kt`** — `PeriodSelector` chips: added `modifier = Modifier.weight(1f)` so chips divide the row equally; label `Text` now has `maxLines = 1`, `TextOverflow.Ellipsis`, `textAlign = TextAlign.Center`, `fillMaxWidth()`.
+- **`DashboardScreen.kt`** — `LineChartCard` (Bitcoin chart) now applies `localizeChartLabel()` to its entries — "Week 1"→"Semana 1", "Mon"→"Lun", "Jan"→"Ene" on language toggle.
+
+---
+
+### 100. Pasta Fresca Center Image Removed
+
+**Prompt:**
+> "in the mock data of the map remove the first image of asador sushi and the second image of Pasta"
+> "in the mock data of the map remove the pasta fresca image url is not loading so lets delete the image the center image"
+
+**Result:**
+- **`ShopLocationMockGenerator.kt`** — Pasta Fresca second image (`photo-1555949258`) removed. Now shows 1 image.
+
+---
+
+### 101. El Asador First Image Removed
+
+**Prompt:**
+> "lets do the same for the first image of EL Asador lets remove the first image"
+
+**Result:**
+- **`ShopLocationMockGenerator.kt`** — El Asador first remaining image (`photo-1504674900247`) removed. Now shows 1 image.
+
+---
+
+### 102. Pasta Fresca New Images
+
+**Prompt:**
+> "change the url of the images for pasta fresca use new images"
+
+**Result:**
+- **`ShopLocationMockGenerator.kt`** — Pasta Fresca replaced with 3 fresh Unsplash pasta images: `photo-1621996346565`, `photo-1563379926898`, `photo-1598866594230`.
+- **`AppDatabase.kt`** — Version bumped 2 → 3 to trigger destructive migration and re-seed.
+
+---
+
+### 103. Sushi Kyoto New Images + El Asador More Images
+
+**Prompt:**
+> "agrega mas imagenes a el asador y cambia las imagnes de sushi kyoto" + "y actualiza la version de room"
+
+**Result:**
+- **`ShopLocationMockGenerator.kt`** — Sushi Kyoto: replaced all 3 images with fresh sushi photos (`photo-1547592166`, `photo-1562802378`, `photo-1617196034796`). El Asador: kept existing image, added 2 grilled meat photos (`photo-1529193591184`, `photo-1555939594`).
+- **`AppDatabase.kt`** — Version bumped 3 → 4.
+
+---
+
+### 104. Welcome Message Translation
+
+**Prompt:**
+> "translate the welcome message in home"
+
+**Result:**
+- **`AppStrings.kt`** — Added `dashWelcome` field: English "Welcome", Spanish "Bienvenido".
+- **`DashboardScreen.kt`** — `BalanceCard` now uses `"${s.dashWelcome}, $userName"` instead of hardcoded "Welcome, $userName".
+
+---
+
+### 105. Translate Icon in Welcome Dialog
+
+**Prompt:**
+> "add the translate icon to the right top corner of the initial dialog and translate to spanish"
+
+**Result:**
+- **`App.kt`** — `WelcomeDialog` now accepts `onToggleLanguage: () -> Unit`. Added `Box` wrapper inside `Surface`; `IconButton` with `Icons.Default.Translate` positioned `Alignment.TopEnd` with 8dp padding. A `Spacer(DIALOG_TRANSLATE_OFFSET = 32dp)` at the top of the Column creates clearance under the button. Added imports: `Box`, `IconButton`, `Alignment`. New constants: `DIALOG_TRANSLATE_PADDING`, `DIALOG_TRANSLATE_OFFSET`.
+
+---
+
+**Total prompts:** 105 | **Sessions:** 9 | **Files created/modified:** 105+
 
 *Built with Kotlin Multiplatform + Compose by* ***Artificialss***
 
-*Assisted by Claude Opus 4.6*
+*Assisted by Claude Sonnet 4.6*
 
 </div>

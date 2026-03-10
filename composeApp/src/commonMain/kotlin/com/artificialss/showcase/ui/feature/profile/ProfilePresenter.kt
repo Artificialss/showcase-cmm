@@ -69,7 +69,7 @@ class ProfilePresenterImpl(
         val current = _uiState.value as? ProfileUiState.Success ?: return
         _uiState.value = current.copy(
             isChatVisible = true,
-            chatMessages = listOf(ChatMessage(text = GREETING_MESSAGE, isUser = false)),
+            chatMessages = listOf(ChatMessage(id = "msg_0", text = GREETING_MESSAGE, isUser = false)),
             isChatLoading = false,
         )
     }
@@ -81,7 +81,8 @@ class ProfilePresenterImpl(
 
     override fun onChatOptionSelected(option: String) {
         val current = _uiState.value as? ProfileUiState.Success ?: return
-        val userMessage = ChatMessage(text = option, isUser = true)
+        val nextId = current.chatMessages.size
+        val userMessage = ChatMessage(id = "msg_$nextId", text = option, isUser = true)
         _uiState.value = current.copy(
             chatMessages = current.chatMessages + userMessage,
             isChatLoading = true,
@@ -89,8 +90,9 @@ class ProfilePresenterImpl(
         viewModelScope.launch {
             delay(AI_RESPONSE_DELAY_MS)
             val response = AI_RESPONSES[option] ?: DEFAULT_RESPONSE
-            val botMessage = ChatMessage(text = response, isUser = false)
             val updated = _uiState.value as? ProfileUiState.Success ?: return@launch
+            val botId = updated.chatMessages.size
+            val botMessage = ChatMessage(id = "msg_$botId", text = response, isUser = false)
             _uiState.value = updated.copy(
                 chatMessages = updated.chatMessages + botMessage,
                 isChatLoading = false,

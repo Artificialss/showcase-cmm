@@ -4,4 +4,7 @@ enum class ColorPalette {
     BLUE,
     GREEN,
     PURPLE,
+    ORANGE,
+    GOLD,
+    RED,
 }

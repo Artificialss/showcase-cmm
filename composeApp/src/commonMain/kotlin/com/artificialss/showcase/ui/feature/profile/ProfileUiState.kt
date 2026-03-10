@@ -4,6 +4,7 @@ import com.artificialss.showcase.domain.model.ActivityItem
 import com.artificialss.showcase.domain.model.UserProfile
 
 data class ChatMessage(
+    val id: String,
     val text: String,
     val isUser: Boolean,
 )

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Login -->
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Sign in to your account</string>
+    <string name="login_email">Email</string>
+    <string name="login_password">Password</string>
+    <string name="login_show_password">Show password</string>
+    <string name="login_hide_password">Hide password</string>
+    <string name="login_remember_me">Remember me</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="login_sign_in">Sign In</string>
+    <string name="login_signing_in">Signing In...</string>
+    <string name="login_or">OR</string>
+    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="login_sign_up">Sign Up</string>
+    <string name="login_footer">By signing in, you agree to our Terms of Service and Privacy Policy</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_map">Map</string>
+    <string name="nav_gallery">Gallery</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_ui_kit">UI Kit</string>
+
+    <!-- Map -->
+    <string name="map_address">Address</string>
+    <string name="map_hours">Hours</string>
+    <string name="map_navigate">Navigate</string>
+
+    <!-- Dashboard -->
+    <string name="dash_analytics">Analytics</string>
+    <string name="dash_bitcoin">Bitcoin Price</string>
+    <string name="dash_weekly_activity">Weekly Activity</string>
+    <string name="dash_category_breakdown">Category Breakdown</string>
+    <string name="dash_spending_by_category">Spending by Category</string>
+    <string name="dash_total">Total</string>
+    <string name="dash_recent_transactions">Recent Transactions</string>
+    <string name="dash_see_all">See all</string>
+    <string name="dash_all_transactions">All Transactions</string>
+    <string name="dash_send">Send</string>
+    <string name="dash_receive">Receive</string>
+    <string name="dash_pay">Pay</string>
+    <string name="dash_history">History</string>
+    <string name="dash_no_data">No data available</string>
+
+    <!-- Gallery -->
+    <string name="gallery_title">Gallery</string>
+
+    <!-- Welcome dialog -->
+    <string name="welcome_title">Artificialss Showcase</string>
+    <string name="welcome_subtitle">Technical Demo Application</string>
+    <string name="welcome_who_we_are">Who we are</string>
+    <string name="welcome_who_we_are_text">Artificialss builds cross-platform mobile apps with modern architectures and pixel-perfect UI.</string>
+    <string name="welcome_highlights">Highlights</string>
+    <string name="welcome_highlight_1">Canvas charts with touch tooltips</string>
+    <string name="welcome_highlight_2">Interactive platform map</string>
+    <string name="welcome_highlight_3">Image gallery with async loading</string>
+    <string name="welcome_highlight_4">MVP + Room + Koin + Apollo</string>
+    <string name="welcome_highlight_5">Live theme, font, and color switching</string>
+    <string name="welcome_theme_hint">Use the bottom bar to switch themes, fonts, and colors in real time.</string>
+    <string name="welcome_built_with">Built with Kotlin Multiplatform + Compose</string>
+    <string name="welcome_explore">Explore the App</string>
+</resources>

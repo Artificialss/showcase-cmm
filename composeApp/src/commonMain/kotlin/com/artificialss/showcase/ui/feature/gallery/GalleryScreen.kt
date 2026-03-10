@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.ViewModule
-import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +51,8 @@ import coil3.compose.SubcomposeAsyncImage
 import com.artificialss.showcase.domain.model.GalleryItem
 import com.artificialss.showcase.ui.components.ErrorMessage
 import com.artificialss.showcase.ui.components.LoadingIndicator
+import com.artificialss.showcase.ui.localization.LocalAppStrings
+import com.artificialss.showcase.ui.theme.ShapeStyle
 
 private enum class GalleryLayout { GRID_2, GRID_3, LIST }
 private enum class GallerySortOrder { TITLE_ASC, TITLE_DESC, ALBUM }
@@ -57,6 +60,7 @@ private enum class GallerySortOrder { TITLE_ASC, TITLE_DESC, ALBUM }
 @Composable
 fun GalleryScreen(
     presenter: GalleryPresenter,
+    shapeStyle: ShapeStyle = ShapeStyle.ROUNDED,
     modifier: Modifier = Modifier,
 ) {
     val state by presenter.uiState.collectAsStateWithLifecycle()
@@ -68,6 +72,7 @@ fun GalleryScreen(
             Box(modifier = modifier.fillMaxSize()) {
                 GalleryContent(
                     items = current.items,
+                    shapeStyle = shapeStyle,
                     onItemSelected = { presenter.onItemSelected(it) },
                 )
                 if (current.selectedItem != null) {
@@ -84,6 +89,7 @@ fun GalleryScreen(
 @Composable
 private fun GalleryContent(
     items: List<GalleryItem>,
+    shapeStyle: ShapeStyle,
     onItemSelected: (GalleryItem) -> Unit,
 ) {
     var layout by remember { mutableStateOf(GalleryLayout.GRID_2) }
@@ -108,7 +114,7 @@ private fun GalleryContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = GALLERY_TITLE,
+                text = LocalAppStrings.current.galleryTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -160,15 +166,18 @@ private fun GalleryContent(
             GalleryLayout.GRID_2 -> GalleryGrid(
                 items = sorted,
                 columns = GRID_COLUMNS_2,
+                shapeStyle = shapeStyle,
                 onItemSelected = onItemSelected,
             )
             GalleryLayout.GRID_3 -> GalleryGrid(
                 items = sorted,
                 columns = GRID_COLUMNS_3,
+                shapeStyle = shapeStyle,
                 onItemSelected = onItemSelected,
             )
             GalleryLayout.LIST -> GalleryList(
                 items = sorted,
+                shapeStyle = shapeStyle,
                 onItemSelected = onItemSelected,
             )
         }
@@ -179,16 +188,21 @@ private fun GalleryContent(
 private fun GalleryGrid(
     items: List<GalleryItem>,
     columns: Int,
+    shapeStyle: ShapeStyle,
     onItemSelected: (GalleryItem) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
-        contentPadding = PaddingValues(top = GRID_TOP_PADDING),
+        contentPadding = PaddingValues(top = GRID_TOP_PADDING, bottom = GRID_BOTTOM_PADDING),
         horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
         verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
     ) {
         items(items = items, key = { it.id }) { item ->
-            GalleryItemCard(item = item, onClick = { onItemSelected(item) })
+            GalleryItemCard(
+                item = item,
+                shapeStyle = shapeStyle,
+                onClick = { onItemSelected(item) },
+            )
         }
     }
 }
@@ -196,14 +210,19 @@ private fun GalleryGrid(
 @Composable
 private fun GalleryList(
     items: List<GalleryItem>,
+    shapeStyle: ShapeStyle,
     onItemSelected: (GalleryItem) -> Unit,
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(top = GRID_TOP_PADDING),
+        contentPadding = PaddingValues(top = GRID_TOP_PADDING, bottom = GRID_BOTTOM_PADDING),
         verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
     ) {
         items(items = items, key = { it.id }) { item ->
-            GalleryListItem(item = item, onClick = { onItemSelected(item) })
+            GalleryListItem(
+                item = item,
+                shapeStyle = shapeStyle,
+                onClick = { onItemSelected(item) },
+            )
         }
     }
 }
@@ -211,31 +230,49 @@ private fun GalleryList(
 @Composable
 private fun GalleryItemCard(
     item: GalleryItem,
+    shapeStyle: ShapeStyle,
     onClick: () -> Unit,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-    ) {
+    if (shapeStyle == ShapeStyle.PILL) {
         SubcomposeAsyncImage(
             model = item.thumbnailUrl,
             contentDescription = item.title,
             contentScale = ContentScale.Crop,
-            loading = { ImageLoadingPlaceholder() },
+            loading = { ImagePlaceholder() },
             error = { ImageErrorPlaceholder() },
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f),
+                .aspectRatio(1f)
+                .clip(CircleShape)
+                .clickable(onClick = onClick),
         )
+    } else {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+        ) {
+            SubcomposeAsyncImage(
+                model = item.thumbnailUrl,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                loading = { ImagePlaceholder() },
+                error = { ImageErrorPlaceholder() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f),
+            )
+        }
     }
 }
 
 @Composable
 private fun GalleryListItem(
     item: GalleryItem,
+    shapeStyle: ShapeStyle,
     onClick: () -> Unit,
 ) {
+    val isPill = shapeStyle == ShapeStyle.PILL
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -245,13 +282,18 @@ private fun GalleryListItem(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val thumbnailModifier = if (isPill) {
+                Modifier.size(LIST_IMAGE_SIZE).clip(CircleShape)
+            } else {
+                Modifier.size(LIST_IMAGE_SIZE)
+            }
             SubcomposeAsyncImage(
                 model = item.thumbnailUrl,
                 contentDescription = item.title,
                 contentScale = ContentScale.Crop,
-                loading = { ImageLoadingPlaceholder() },
+                loading = { ImagePlaceholder() },
                 error = { ImageErrorPlaceholder() },
-                modifier = Modifier.size(LIST_IMAGE_SIZE),
+                modifier = thumbnailModifier,
             )
             Spacer(modifier = Modifier.width(LIST_TEXT_PADDING))
             Text(
@@ -324,17 +366,17 @@ private fun FullScreenViewer(
 }
 
 @Composable
-private fun ImageLoadingPlaceholder() {
+private fun ImagePlaceholder() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.errorContainer),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Image,
+            imageVector = Icons.Default.BrokenImage,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PLACEHOLDER_ALPHA),
+            tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = PLACEHOLDER_ALPHA),
             modifier = Modifier.size(PLACEHOLDER_ICON_SIZE),
         )
     }
@@ -359,6 +401,7 @@ private fun ImageErrorPlaceholder() {
 
 private val CONTENT_PADDING = 16.dp
 private val GRID_TOP_PADDING = 12.dp
+private val GRID_BOTTOM_PADDING = 16.dp
 private val GRID_SPACING = 8.dp
 private val VIEWER_PADDING = 16.dp
 private val CLOSE_BUTTON_PADDING = 8.dp
@@ -371,7 +414,6 @@ private const val GRID_COLUMNS_2 = 2
 private const val GRID_COLUMNS_3 = 3
 private const val PLACEHOLDER_ALPHA = 0.5f
 
-private const val GALLERY_TITLE = "Gallery"
 private const val SORT_DESC = "Sort"
 private const val LAYOUT_DESC = "Layout"
 private const val CLOSE_DESC = "Close viewer"

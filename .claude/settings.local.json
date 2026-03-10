@@ -7,7 +7,8 @@
       "Bash(rm:*)",
       "Bash(sips:*)",
       "Bash(find:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }

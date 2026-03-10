@@ -45,8 +45,6 @@ val mapModule = module {
 
 val galleryModule = module {
     single<GalleryRepository> { MockGalleryRepository(get()) }
-    // Swap to go live with GraphQLZero:
-    // single<GalleryRepository> { RemoteGalleryRepository(get()) }
     viewModel { GalleryPresenterImpl(get()) }
 }
 

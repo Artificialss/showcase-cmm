@@ -18,7 +18,7 @@ import com.artificialss.showcase.data.local.entity.TransactionEntity
         ShopLocationEntity::class,
         GalleryItemEntity::class,
     ],
-    version = 1,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

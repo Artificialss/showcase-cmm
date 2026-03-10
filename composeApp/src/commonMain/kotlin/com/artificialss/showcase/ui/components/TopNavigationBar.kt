@@ -111,11 +111,11 @@ private fun NavItem(
 }
 
 private fun labelFor(route: AppRoute): String = when (route) {
-    AppRoute.Dashboard -> "Home"
-    AppRoute.Map -> "Map"
-    AppRoute.Gallery -> "Gallery"
-    AppRoute.Profile -> "Profile"
-    AppRoute.Components -> "UI Kit"
+    AppRoute.Dashboard -> NAV_HOME
+    AppRoute.Map -> NAV_MAP
+    AppRoute.Gallery -> NAV_GALLERY
+    AppRoute.Profile -> NAV_PROFILE
+    AppRoute.Components -> NAV_UI_KIT
     else -> ""
 }
 
@@ -128,6 +128,11 @@ private fun iconFor(route: AppRoute): ImageVector = when (route) {
     else -> Icons.Default.Home
 }
 
+private const val NAV_HOME = "Home"
+private const val NAV_MAP = "Map"
+private const val NAV_GALLERY = "Gallery"
+private const val NAV_PROFILE = "Profile"
+private const val NAV_UI_KIT = "UI Kit"
 private val ELEVATION = 2.dp
 private val CONTENT_PADDING = 8.dp
 private val VERTICAL_PADDING = 8.dp

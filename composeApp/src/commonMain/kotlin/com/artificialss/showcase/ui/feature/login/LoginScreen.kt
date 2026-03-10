@@ -3,14 +3,17 @@ package com.artificialss.showcase.ui.feature.login
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -32,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,9 +44,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import com.artificialss.showcase.ui.theme.BrandGreen
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -50,6 +52,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.artificialss.showcase.ui.localization.LocalAppStrings
 
 @Composable
 fun LoginScreen(
@@ -64,67 +67,184 @@ fun LoginScreen(
     var rememberMe by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state) {
-        if (state is LoginUiState.Success) {
-            onLoginSuccess()
-        }
+        if (state is LoginUiState.Success) onLoginSuccess()
     }
+
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         StatusBarBackground()
-        Column(
+        BoxWithConstraints(
             modifier = modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = HORIZONTAL_PADDING),
+                .padding(top = statusBarHeight, bottom = navBarHeight),
+        ) {
+            if (maxWidth > maxHeight) {
+                LandscapeLoginContent(
+                    email = email,
+                    password = password,
+                    passwordVisible = passwordVisible,
+                    rememberMe = rememberMe,
+                    state = state,
+                    onEmailChange = { email = it },
+                    onPasswordChange = { password = it },
+                    onToggleVisibility = { passwordVisible = !passwordVisible },
+                    onRememberMeChange = { rememberMe = it },
+                    onLogin = { presenter.onLogin(email, password) },
+                )
+            } else {
+                PortraitLoginContent(
+                    email = email,
+                    password = password,
+                    passwordVisible = passwordVisible,
+                    rememberMe = rememberMe,
+                    state = state,
+                    onEmailChange = { email = it },
+                    onPasswordChange = { password = it },
+                    onToggleVisibility = { passwordVisible = !passwordVisible },
+                    onRememberMeChange = { rememberMe = it },
+                    onLogin = { presenter.onLogin(email, password) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PortraitLoginContent(
+    email: String,
+    password: String,
+    passwordVisible: Boolean,
+    rememberMe: Boolean,
+    state: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onToggleVisibility: () -> Unit,
+    onRememberMeChange: (Boolean) -> Unit,
+    onLogin: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = HORIZONTAL_PADDING),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(modifier = Modifier.height(SPACING_MD))
+        BrandingHeader()
+        Spacer(modifier = Modifier.height(SPACING_LG))
+        LoginFormContent(
+            email = email,
+            password = password,
+            passwordVisible = passwordVisible,
+            rememberMe = rememberMe,
+            state = state,
+            onEmailChange = onEmailChange,
+            onPasswordChange = onPasswordChange,
+            onToggleVisibility = onToggleVisibility,
+            onRememberMeChange = onRememberMeChange,
+            onLogin = onLogin,
+        )
+        Spacer(modifier = Modifier.height(SPACING_LG))
+        FooterText()
+        Spacer(modifier = Modifier.height(SPACING_MD))
+    }
+}
+
+@Composable
+private fun LandscapeLoginContent(
+    email: String,
+    password: String,
+    passwordVisible: Boolean,
+    rememberMe: Boolean,
+    state: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onToggleVisibility: () -> Unit,
+    onRememberMeChange: (Boolean) -> Unit,
+    onLogin: () -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(HORIZONTAL_PADDING),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Spacer(modifier = Modifier.weight(1f))
-
             BrandingHeader()
-
-            Spacer(modifier = Modifier.height(SPACING_XL))
-
-            EmailField(value = email, onValueChange = { email = it })
-            Spacer(modifier = Modifier.height(SPACING_MD))
-
-            PasswordField(
-                value = password,
-                onValueChange = { password = it },
-                visible = passwordVisible,
-                onToggleVisibility = { passwordVisible = !passwordVisible },
-            )
-            Spacer(modifier = Modifier.height(SPACING_SM))
-
-            RememberAndForgotRow(
+        }
+        VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = HORIZONTAL_PADDING, vertical = SPACING_MD),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            LoginFormContent(
+                email = email,
+                password = password,
+                passwordVisible = passwordVisible,
                 rememberMe = rememberMe,
-                onRememberMeChanged = { rememberMe = it },
+                state = state,
+                onEmailChange = onEmailChange,
+                onPasswordChange = onPasswordChange,
+                onToggleVisibility = onToggleVisibility,
+                onRememberMeChange = onRememberMeChange,
+                onLogin = onLogin,
             )
-
-            Spacer(modifier = Modifier.height(SPACING_LG))
-
-            LoginButton(state = state, onClick = { presenter.onLogin(email, password) })
-
-            ErrorText(state = state)
-
-            Spacer(modifier = Modifier.height(SPACING_LG))
-
-            DividerWithText()
-
-            Spacer(modifier = Modifier.height(SPACING_MD))
-
-            SignUpPrompt()
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            FooterText()
-            Spacer(modifier = Modifier.height(SPACING_MD))
         }
     }
+}
+
+@Composable
+private fun LoginFormContent(
+    email: String,
+    password: String,
+    passwordVisible: Boolean,
+    rememberMe: Boolean,
+    state: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onToggleVisibility: () -> Unit,
+    onRememberMeChange: (Boolean) -> Unit,
+    onLogin: () -> Unit,
+) {
+    val s = LocalAppStrings.current
+    EmailField(value = email, onValueChange = onEmailChange, label = s.loginEmail)
+    Spacer(modifier = Modifier.height(SPACING_MD))
+    PasswordField(
+        value = password,
+        onValueChange = onPasswordChange,
+        visible = passwordVisible,
+        onToggleVisibility = onToggleVisibility,
+        label = s.loginPassword,
+        showDesc = s.loginShowPassword,
+        hideDesc = s.loginHidePassword,
+    )
+    Spacer(modifier = Modifier.height(SPACING_SM))
+    RememberAndForgotRow(
+        rememberMe = rememberMe,
+        onRememberMeChanged = onRememberMeChange,
+        rememberMeLabel = s.loginRememberMe,
+        forgotLabel = s.loginForgotPassword,
+    )
+    Spacer(modifier = Modifier.height(SPACING_LG))
+    LoginButton(state = state, onClick = onLogin, signInLabel = s.loginSignIn, signingInLabel = s.loginSigningIn)
+    ErrorText(state = state)
+    Spacer(modifier = Modifier.height(SPACING_LG))
+    DividerWithText(orLabel = s.loginOr)
+    Spacer(modifier = Modifier.height(SPACING_MD))
+    SignUpPrompt(noAccountLabel = s.loginNoAccount, signUpLabel = s.loginSignUp)
 }
 
 @Composable
@@ -134,38 +254,40 @@ private fun StatusBarBackground() {
         modifier = Modifier
             .fillMaxWidth()
             .height(statusBarHeight)
-            .background(BrandGreen),
+            .background(MaterialTheme.colorScheme.primary),
     )
 }
 
 @Composable
 private fun BrandingHeader() {
+    val s = LocalAppStrings.current
     Icon(
         imageVector = Icons.Default.Lock,
         contentDescription = null,
-        tint = BrandGreen,
+        tint = MaterialTheme.colorScheme.primary,
         modifier = Modifier.size(BRAND_ICON_SIZE),
     )
     Spacer(modifier = Modifier.height(SPACING_MD))
     Text(
-        text = TITLE_TEXT,
+        text = s.loginTitle,
         style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(SPACING_XS))
     Text(
-        text = SUBTITLE_TEXT,
+        text = s.loginSubtitle,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
 @Composable
-private fun EmailField(value: String, onValueChange: (String) -> Unit) {
+private fun EmailField(value: String, onValueChange: (String) -> Unit, label: String) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(EMAIL_LABEL) },
+        label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
@@ -178,11 +300,14 @@ private fun PasswordField(
     onValueChange: (String) -> Unit,
     visible: Boolean,
     onToggleVisibility: () -> Unit,
+    label: String,
+    showDesc: String,
+    hideDesc: String,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(PASSWORD_LABEL) },
+        label = { Text(label) },
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         singleLine = true,
@@ -190,7 +315,7 @@ private fun PasswordField(
             IconButton(onClick = onToggleVisibility) {
                 Icon(
                     imageVector = if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (visible) HIDE_PASSWORD_DESC else SHOW_PASSWORD_DESC,
+                    contentDescription = if (visible) hideDesc else showDesc,
                 )
             }
         },
@@ -202,6 +327,8 @@ private fun PasswordField(
 private fun RememberAndForgotRow(
     rememberMe: Boolean,
     onRememberMeChanged: (Boolean) -> Unit,
+    rememberMeLabel: String,
+    forgotLabel: String,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -216,15 +343,16 @@ private fun RememberAndForgotRow(
             )
             Spacer(modifier = Modifier.width(SPACING_XS))
             Text(
-                text = REMEMBER_ME_TEXT,
+                text = rememberMeLabel,
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         }
         TextButton(onClick = { }) {
             Text(
-                text = FORGOT_PASSWORD_TEXT,
+                text = forgotLabel,
                 style = MaterialTheme.typography.bodySmall,
-                color = BrandGreen,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
@@ -234,6 +362,8 @@ private fun RememberAndForgotRow(
 private fun LoginButton(
     state: LoginUiState,
     onClick: () -> Unit,
+    signInLabel: String,
+    signingInLabel: String,
 ) {
     val isLoading = state is LoginUiState.Loading
     Button(
@@ -255,10 +385,10 @@ private fun LoginButton(
                     strokeCap = StrokeCap.Round,
                 )
                 Spacer(modifier = Modifier.width(SPACING_SM))
-                Text(SIGNING_IN_TEXT)
+                Text(signingInLabel)
             }
         } else {
-            Text(SIGN_IN_TEXT)
+            Text(signInLabel)
         }
     }
 }
@@ -276,14 +406,14 @@ private fun ErrorText(state: LoginUiState) {
 }
 
 @Composable
-private fun DividerWithText() {
+private fun DividerWithText(orLabel: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HorizontalDivider(modifier = Modifier.weight(1f))
         Text(
-            text = OR_TEXT,
+            text = orLabel,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = SPACING_SM),
@@ -293,22 +423,22 @@ private fun DividerWithText() {
 }
 
 @Composable
-private fun SignUpPrompt() {
+private fun SignUpPrompt(noAccountLabel: String, signUpLabel: String) {
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = NO_ACCOUNT_TEXT,
+            text = noAccountLabel,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TextButton(onClick = { }) {
             Text(
-                text = SIGN_UP_TEXT,
+                text = signUpLabel,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = BrandGreen,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
@@ -316,8 +446,9 @@ private fun SignUpPrompt() {
 
 @Composable
 private fun FooterText() {
+    val s = LocalAppStrings.current
     Text(
-        text = FOOTER_TEXT,
+        text = s.loginFooter,
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.outline,
         textAlign = TextAlign.Center,
@@ -337,19 +468,5 @@ private val CHECKBOX_SIZE = 24.dp
 private val LOADER_SIZE = 18.dp
 private val LOADER_STROKE = 2.dp
 
-private const val TITLE_TEXT = "Welcome Back"
-private const val SUBTITLE_TEXT = "Sign in to your account"
-private const val EMAIL_LABEL = "Email"
-private const val PASSWORD_LABEL = "Password"
-private const val SHOW_PASSWORD_DESC = "Show password"
-private const val HIDE_PASSWORD_DESC = "Hide password"
-private const val REMEMBER_ME_TEXT = "Remember me"
-private const val FORGOT_PASSWORD_TEXT = "Forgot password?"
-private const val SIGN_IN_TEXT = "Sign In"
-private const val SIGNING_IN_TEXT = "Signing In..."
-private const val OR_TEXT = "OR"
-private const val NO_ACCOUNT_TEXT = "Don't have an account?"
-private const val SIGN_UP_TEXT = "Sign Up"
-private const val FOOTER_TEXT = "By signing in, you agree to our Terms of Service and Privacy Policy"
 private const val DEFAULT_EMAIL = "guest@artificialss.com"
 private const val DEFAULT_PASSWORD = "showcase2025"

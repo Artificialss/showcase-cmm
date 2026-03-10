@@ -1,9 +1,13 @@
 package com.artificialss.showcase.ui.components.map
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -22,6 +26,9 @@ actual fun PlatformMapView(
     onMarkerClick: (String) -> Unit,
     modifier: Modifier,
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val markerHue = remember(primaryColor) { primaryColor.toMarkerHue() }
+
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             LatLng(cameraState.latitude, cameraState.longitude),
@@ -51,6 +58,7 @@ actual fun PlatformMapView(
             Marker(
                 state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
                 title = marker.title,
+                icon = BitmapDescriptorFactory.defaultMarker(markerHue),
                 onClick = {
                     onMarkerClick(marker.id)
                     true
@@ -58,6 +66,13 @@ actual fun PlatformMapView(
             )
         }
     }
+}
+
+private fun androidx.compose.ui.graphics.Color.toMarkerHue(): Float {
+    val argb = this.toArgb()
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(argb, hsv)
+    return hsv[0]
 }
 
 private const val CAMERA_DEBOUNCE_MS = 300L

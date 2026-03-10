@@ -37,22 +37,62 @@ class MockGeneratorConsistencyTest {
     }
 
     @Test
-    fun shopLocationGeneratorIsDeterministic() {
+    fun restaurantGeneratorIsDeterministic() {
         val first = ShopLocationMockGenerator.generate(seed = 789L)
         val second = ShopLocationMockGenerator.generate(seed = 789L)
         assertEquals(first, second)
     }
 
     @Test
-    fun shopLocationGeneratorHasNoNullFields() {
-        val shops = ShopLocationMockGenerator.generate(seed = 0L)
-        shops.forEach { shop ->
-            assertTrue(shop.id.isNotBlank())
-            assertTrue(shop.name.isNotBlank())
-            assertTrue(shop.category.isNotBlank())
-            assertTrue(shop.address.isNotBlank())
-            assertTrue(shop.hours.isNotBlank())
+    fun restaurantGeneratorHasNoBlankFields() {
+        val restaurants = ShopLocationMockGenerator.generate(seed = 0L)
+        restaurants.forEach { r ->
+            assertTrue(r.id.isNotBlank())
+            assertTrue(r.name.isNotBlank())
+            assertTrue(r.category.isNotBlank())
+            assertTrue(r.address.isNotBlank())
+            assertTrue(r.hours.isNotBlank())
         }
+    }
+
+    @Test
+    fun restaurantGeneratorHasThreeImagesEach() {
+        val restaurants = ShopLocationMockGenerator.generate(seed = 0L)
+        restaurants.forEach { r ->
+            assertEquals(3, r.images.size, "Expected 3 images for ${r.name}")
+        }
+    }
+
+    @Test
+    fun restaurantImagesAreValidHttpsUrls() {
+        val restaurants = ShopLocationMockGenerator.generate(seed = 0L)
+        restaurants.forEach { r ->
+            r.images.forEach { url ->
+                assertTrue(url.startsWith("https://"), "Image URL must be HTTPS: $url")
+            }
+        }
+    }
+
+    @Test
+    fun restaurantRatingsAreInValidRange() {
+        val restaurants = ShopLocationMockGenerator.generate(seed = 0L)
+        restaurants.forEach { r ->
+            assertTrue(r.rating in 3.0f..5.0f, "Rating out of range for ${r.name}: ${r.rating}")
+        }
+    }
+
+    @Test
+    fun restaurantIdsHaveCorrectPrefix() {
+        val restaurants = ShopLocationMockGenerator.generate(seed = 0L)
+        restaurants.forEachIndexed { index, r ->
+            assertEquals("restaurant_$index", r.id)
+        }
+    }
+
+    @Test
+    fun restaurantCountIsConstrainedByMaxCatalog() {
+        val result = ShopLocationMockGenerator.generate(count = 100, seed = 0L)
+        assertTrue(result.size <= 10, "Count should be capped at the catalog size (10)")
     }
 
     @Test

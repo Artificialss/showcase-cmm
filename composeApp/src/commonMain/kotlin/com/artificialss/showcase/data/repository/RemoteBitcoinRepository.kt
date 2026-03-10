@@ -16,11 +16,16 @@ class RemoteBitcoinRepository(
     private val httpClient: HttpClient,
 ) : BitcoinRepository {
 
+    private val cache = mutableMapOf<ChartPeriod, List<ChartDataPoint>>()
+
     override suspend fun getBitcoinPrices(period: ChartPeriod): List<ChartDataPoint> {
+        cache[period]?.let { return it }
         val days = periodToDays(period)
         val response = httpClient.get("$BASE_URL?vs_currency=usd&days=$days")
         val body = response.bodyAsText()
-        return parsePrices(body, period)
+        val result = parsePrices(body, period)
+        cache[period] = result
+        return result
     }
 
     private fun periodToDays(period: ChartPeriod): Int = when (period) {
@@ -30,8 +35,7 @@ class RemoteBitcoinRepository(
     }
 
     private fun parsePrices(body: String, period: ChartPeriod): List<ChartDataPoint> {
-        val json = Json { ignoreUnknownKeys = true }
-        val root = json.parseToJsonElement(body).jsonObject
+        val root = JSON.parseToJsonElement(body).jsonObject
         val pricesArray = root["prices"]?.jsonArray ?: return emptyList()
 
         val allPrices = pricesArray.map { entry ->
@@ -75,6 +79,8 @@ class RemoteBitcoinRepository(
         private const val DAYS_MONTH = 30
         private const val DAYS_QUARTER = 90
         private const val INDEX_VALUE = 1
+
+        private val JSON = Json { ignoreUnknownKeys = true }
 
         private val WEEK_LABELS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         private val MONTH_LABELS = listOf("Week 1", "Week 2", "Week 3", "Week 4")

@@ -566,6 +566,7 @@ private fun SlidersSection() {
             valueColor = MaterialTheme.colorScheme.error,
         )
         val errorColor = MaterialTheme.colorScheme.error
+        val inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
         Slider(
             value = volume,
             onValueChange = { volume = it },
@@ -573,7 +574,7 @@ private fun SlidersSection() {
             colors = SliderDefaults.colors(
                 thumbColor = errorColor,
                 activeTrackColor = errorColor,
-                inactiveTrackColor = MaterialTheme.colorScheme.errorContainer,
+                inactiveTrackColor = inactiveTrackColor,
             ),
             thumb = { SliderThumb(color = errorColor) },
             track = { sliderState ->
@@ -583,7 +584,7 @@ private fun SlidersSection() {
                     thumbTrackGapSize = 0.dp,
                     colors = SliderDefaults.colors(
                         activeTrackColor = errorColor,
-                        inactiveTrackColor = MaterialTheme.colorScheme.errorContainer,
+                        inactiveTrackColor = inactiveTrackColor,
                     ),
                 )
             },
