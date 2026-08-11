@@ -1,6 +1,8 @@
 # Artificialss Showcase
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform: Android](https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
+[![Platform: iOS](https://img.shields.io/badge/iOS-000000?logo=apple&logoColor=white)](https://developer.apple.com/ios/)
 
 A **Compose Multiplatform** showcase application demonstrating Artificialss's development capabilities. Built with production-grade architecture and premium UI patterns to impress potential customers.
 
