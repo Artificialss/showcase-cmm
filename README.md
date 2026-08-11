@@ -1,6 +1,10 @@
 # Artificialss Showcase
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A **Compose Multiplatform** showcase application demonstrating Artificialss's development capabilities. Built with production-grade architecture and premium UI patterns to impress potential customers.
+
+This is a public reference build: browse the code, clone it, and run it locally to see the patterns in action.
 
 ## Architecture
 
@@ -130,11 +134,20 @@ All critical state survives configuration changes:
 
 ### Google Maps API Key
 
-Add your key to `local.properties`:
+The Map screen's Android markers use Google Maps Compose, which requires an API key. Without one, the map renders as a blank/grey tile grid but the app still runs (shop details and the iOS Canvas map are unaffected).
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/) and create a project (or select an existing one).
+2. Enable the **Maps SDK for Android** API for that project (APIs & Services → Library).
+3. Go to **APIs & Services → Credentials → Create Credentials → API key**.
+4. (Recommended) Restrict the key to **Android apps** and add this app's package name (`com.artificialss.showcase`) and debug signing certificate SHA-1, and restrict it to the Maps SDK for Android API.
+5. Create `local.properties` at the project root if it doesn't exist (it's git-ignored, so it's never committed) and add your key:
 
 ```properties
+sdk.dir=/path/to/your/Android/sdk
 MAPS_API_KEY=your_api_key_here
 ```
+
+6. Rebuild and run — the key is injected into `AndroidManifest.xml` via a Gradle manifest placeholder (`composeApp/build.gradle.kts`), so no code changes are needed.
 
 ### Run Android
 
@@ -473,6 +486,10 @@ DAO.getAll(): Flow<List<Entity>>
     ▼
 StateFlow<UiState> → Composable
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE). Free to use, modify, and distribute.
 
 ---
 
