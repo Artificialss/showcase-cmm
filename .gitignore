@@ -73,3 +73,21 @@ node_modules/
 *.keystore
 service-account*.json
 keystore.properties
+
+# Environment files (real values live only here, never in git)
+.env.local
+.env.*.local
+
+# OS and editor noise
+Thumbs.db
+
+# Gradle / Android / Kotlin Multiplatform
+build/
+*.hprof
+
+# iOS / Xcode
+*.xcuserstate
+.build/
+
+# Personal Claude Code settings
+.claude/settings.local.json
